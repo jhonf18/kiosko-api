@@ -16,24 +16,28 @@ export const errorHandlerApp = (err: ApiError, _req: Request, res: Response, _ne
     messages: null
   };
 
-  // if (res.headersSent) {
-  //   return next(err);
-  // }
-
   if (err.isOperational) {
     res.status(err.statusCode);
     const code = getKeyByValue(httpStatus, err.statusCode);
-    response.error = {
-      type: err.name,
-      code,
-      message: err.description
-    };
+    if (err.name === 'CUSTOM') {
+      response.error = {
+        type: err.description,
+        code,
+        messages: err.cause
+      };
+    } else {
+      response.error = {
+        type: err.name,
+        code,
+        messages: err.description
+      };
+    }
   } else {
     res.status(500);
     response.error = {
       type: 'Unexpected error',
       code: 'INTERNAL_SERVER_ERROR',
-      message: 'Ha ocurrido un error inesperado en el servidor.'
+      messages: 'Ha ocurrido un error inesperado en el servidor.'
     };
   }
 

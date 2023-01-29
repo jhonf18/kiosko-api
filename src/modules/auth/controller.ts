@@ -4,30 +4,30 @@ import { httpStatus } from './../../config/errors/httpStatusCodes';
 import * as awilix from 'awilix';
 import { response } from '../../config/response/response';
 import { container } from '../../shared';
+import { ValidatorUser } from '../utils/validations';
 import { AuthService } from './service';
 
 container.register({
-  authService: awilix.asClass(AuthService)
+  authService: awilix.asClass(AuthService),
+  validatorUser: awilix.asClass(ValidatorUser)
 });
 
 const authService: AuthService = container.resolve('authService');
 
 const routesAuth = express();
 
-routesAuth.post('/signup', async (_req, res, _next) => {
+routesAuth.post('/signup', async (req, res, next) => {
   try {
-    let data = await authService.signup({
-      name: 's',
-      email: 'ss',
-      nickname: 's',
-      password_1: 's',
-      password_2: 's'
+    let user = await authService.signup({
+      name: req.body.name,
+      email: req.body.email,
+      password_1: req.body.password_1,
+      password_2: req.body.password_2
     });
 
-    response([data], 'OK', httpStatus.OK, res);
+    response([user], 'OK', httpStatus.OK, res);
   } catch (error) {
-    console.log(error);
-    _next(error);
+    next(error);
   }
 });
 

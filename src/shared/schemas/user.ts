@@ -1,48 +1,30 @@
-import mongoose, { Schema, Types } from 'mongoose';
+import { getModelForClass, prop } from '@typegoose/typegoose';
+import { Document } from 'mongoose';
 
-interface IUser {
-  id: string;
-  name: string;
-  nickname: string;
-  email: string;
-  password: string;
-  role?: Types.ObjectId;
+export type UserDocument = User & Document;
+
+class User {
+  @prop({ type: () => String, unique: true, required: true })
+  public id!: string;
+
+  @prop({ type: () => String, required: true })
+  name!: string;
+
+  @prop({ type: () => String, required: true, unique: true })
+  email!: string;
+
+  @prop({ type: () => String, required: true, unique: true })
+  nickname!: string;
+
+  @prop({ type: () => String, required: true })
+  password!: string;
+
+  // TODO: change role because role is required
+  @prop({ ref: 'Roles', required: false })
+  role?: string;
+
+  @prop({ type: () => String, required: false })
   avatar?: string;
 }
 
-const UserSchema = new Schema<IUser>({
-  id: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  name: {
-    type: String,
-    required: true
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  nickname: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  password: {
-    type: String,
-    required: true
-  },
-  role: {
-    type: Schema.Types.ObjectId,
-    ref: 'Roles',
-    required: false
-  },
-  avatar: {
-    type: String,
-    required: false
-  }
-});
-
-export default mongoose.model('User', UserSchema);
+export const UserModel = getModelForClass(User);

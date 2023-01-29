@@ -11,8 +11,11 @@
   "author": "Jhon Freddy Perez",
   "license": "MIT",
   "dependencies": {
+    "@types/bcrypt-nodejs": "^0.0.31",
     "@types/mongoose": "^5.11.97",
+    "@types/uuid": "^9.0.0",
     "awilix": "^8.0.0",
+    "bcrypt-nodejs": "^0.0.3",
     "body-parser": "^1.20.1",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
@@ -21,9 +24,12 @@
     "mongoose": "^6.9.0",
     "morgan": "^1.10.0",
     "morgan-json": "^1.1.0",
-    "winston": "^3.8.2"
+    "uuid": "^9.0.0",
+    "winston": "^3.8.2",
+    "winston-daily-rotate-file": "^4.7.1"
   },
   "devDependencies": {
+    "@typegoose/typegoose": "^10.1.0",
     "@types/body-parser": "^1.19.2",
     "@types/compression": "^1.7.2",
     "@types/cors": "^2.8.13",
