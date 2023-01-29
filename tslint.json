@@ -7,5 +7,9 @@
     "rules": {
       "no-console": false
     },
-    "rulesDirectory": []
+    "lib": ["es6"],
+    "types": ["reflect-metadata"],
+    "rulesDirectory": [],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
 }

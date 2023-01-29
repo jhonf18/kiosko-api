@@ -20,6 +20,7 @@ process.on('uncaughtException', (error: Error | ApiError) => {
 
 process.on('unhandledRejection', (error: Error | ApiError) => {
   if (!isOperationalError(error)) {
+    logger.error(error.message);
     process.exit(1);
   }
 });

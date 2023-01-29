@@ -2,6 +2,7 @@ import express, { Application } from 'express';
 import { PORT } from './config/env/env';
 import { logger } from './config/logger/logger';
 import configApp from './config/server';
+import connectDatabase from './database/connect';
 
 class Server {
   private app: Application;
@@ -20,6 +21,7 @@ class Server {
     this.config();
     this.app.listen(this.PORT, () => {
       logger.info('Server running on port: ' + this.PORT);
+      connectDatabase();
     });
   }
 }
