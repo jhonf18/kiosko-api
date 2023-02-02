@@ -19,9 +19,8 @@ class User {
   @prop({ type: () => String, required: true })
   password!: string;
 
-  // TODO: change role because role is required
-  @prop({ ref: 'Roles', required: false })
-  role?: string;
+  @prop({ type: () => String, required: true })
+  role: string;
 
   @prop({ type: () => String, required: false })
   avatar?: string;

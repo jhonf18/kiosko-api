@@ -25,6 +25,19 @@ routesAuth.post('/signup', async (req, res, next) => {
       password_2: req.body.password_2
     });
 
+    response([user], 'OK', httpStatus.CREATED, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+routesAuth.post('/signin', async (req, res, next) => {
+  try {
+    let user = await authService.signin({
+      nickname: req.body.nickname,
+      password: req.body.password
+    });
+
     response([user], 'OK', httpStatus.OK, res);
   } catch (error) {
     next(error);

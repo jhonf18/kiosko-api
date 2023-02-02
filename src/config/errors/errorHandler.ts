@@ -11,7 +11,7 @@ export const isOperationalError = (error: Error | ApiError) => {
 };
 
 export const logError = (error: Error | ApiError | any) => {
-  logger.error(error);
+  logger.error(error.message);
 };
 
 process.on('uncaughtException', (error: Error | ApiError) => {

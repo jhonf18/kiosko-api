@@ -1,18 +1,29 @@
-import { compare, genSaltSync, hashSync } from 'bcrypt-nodejs';
+import { compare, genSalt, hash } from 'bcrypt-nodejs';
 
 export class HashingPassword {
   public async comparePassword(password: string, newPassword: string): Promise<boolean> {
-    return new Promise((resolve, _reject) => {
+    return new Promise((resolve, reject) => {
       compare(newPassword, password, (err, result) => {
-        if (err) resolve(false);
+        if (err) {
+          reject(new Error(err.message));
+        }
+
         resolve(result);
       });
     });
   }
 
   public async encryptPassword(password: string): Promise<string> {
-    const salt = genSaltSync(10);
-    const newPassword = hashSync(password, salt);
-    return newPassword;
+    return new Promise((resolve, reject) => {
+      genSalt(10, (err, salt) => {
+        if (err) reject(new Error(err.message));
+
+        hash(password, salt, null, (err, hash) => {
+          if (err) reject(new Error(err.message));
+
+          resolve(hash);
+        });
+      });
+    });
   }
 }

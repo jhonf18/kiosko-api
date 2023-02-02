@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { getKeyByValue } from '../../utilities';
 import { ApiError } from './ApiError';
+import { logError } from './errorHandler';
 import { httpStatus } from './httpStatusCodes';
 
 interface ResponseError {
@@ -33,6 +34,7 @@ export const errorHandlerApp = (err: ApiError, _req: Request, res: Response, _ne
       };
     }
   } else {
+    logError(err);
     res.status(500);
     response.error = {
       type: 'Unexpected error',
