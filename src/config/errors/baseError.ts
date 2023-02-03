@@ -21,10 +21,11 @@ export class BaseError extends Error {
     this.statusCode = statusCode;
     this.isOperational = isOperational;
     this.cause = cause;
-    Error.captureStackTrace(this);
     if (cause && name !== 'CUSTOM') {
       logError(cause);
     }
+    Error.captureStackTrace(this);
+
     // Object.setPrototypeOf(this, BaseError.prototype);
   }
 }

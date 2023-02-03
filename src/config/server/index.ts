@@ -1,4 +1,3 @@
-import bodyParser from 'body-parser';
 import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
@@ -30,8 +29,9 @@ configApp.use(httpLogger);
 
 // config standard
 configApp.use(compression());
-configApp.use(bodyParser.json());
-configApp.use(bodyParser.urlencoded({ extended: false }));
+//configApp.use(bodyParser.json());
+//configApp.use(bodyParser.urlencoded({ extended: false }));
+configApp.use(express.json());
 
 // load routes from /api
 configApp.use('/api', routes);

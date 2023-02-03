@@ -1,9 +1,10 @@
-import { getModelForClass, prop } from '@typegoose/typegoose';
+import { getModelForClass, modelOptions, prop } from '@typegoose/typegoose';
 import { Document } from 'mongoose';
 
-export type UserDocument = User & Document;
+export type UserDocument = UserSchema & Document;
 
-class User {
+@modelOptions({ options: { customName: 'user' } })
+export class UserSchema {
   @prop({ type: () => String, unique: true, required: true })
   public id!: string;
 
@@ -24,6 +25,13 @@ class User {
 
   @prop({ type: () => String, required: false })
   avatar?: string;
+
+  // Timestamps
+  @prop({ default: Date.now(), type: () => Date })
+  created_at: Date;
+
+  @prop({ default: Date.now(), type: () => Date })
+  updated_at: Date;
 }
 
-export const UserModel = getModelForClass(User);
+export const UserModel = getModelForClass(UserSchema);

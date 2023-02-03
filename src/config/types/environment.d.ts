@@ -16,3 +16,10 @@ declare global {
     }
   }
 }
+
+declare module 'jsonwebtoken' {
+  interface JwtPayloadApp extends jwt.JwtPayload {
+    jti: string;
+    id: string;
+  }
+}

@@ -1,14 +1,13 @@
 import { ApiError } from '../../config/errors/ApiError';
 import { httpStatus } from '../../config/errors/httpStatusCodes';
-import { UserModel } from '../schemas/user';
+import { UserDocument, UserModel } from '../schemas/user';
 import { ICreateUser } from './../interfaces/ICreateUser';
 
 // add field with minus sign to not send to client
 const excludeFields = '-password';
 
 export class UserRepository {
-  userStore = UserModel;
-  constructor() {}
+  constructor(private userStore: typeof UserModel) {}
 
   public async saveUser(userInput: ICreateUser) {
     const user = new this.userStore(userInput);
@@ -18,7 +17,7 @@ export class UserRepository {
       return userDB;
     } catch (error: any) {
       throw new ApiError(
-        'Error to create user',
+        'Internal Error',
         httpStatus.INTERNAL_SERVER_ERROR,
         'Ha ocurrido un error inesperado al crear el usuario',
         true,
@@ -27,7 +26,11 @@ export class UserRepository {
     }
   }
 
-  public async getUser(field: { nameField: string; valueField: any }, get?: string, getFullData?: boolean) {
+  public async getUser(
+    field: { nameField: string; valueField: any },
+    get?: string,
+    getFullData?: boolean
+  ): Promise<UserDocument | null> {
     const getData = get == null ? null : get;
     const filter: any = {};
     filter[`${field.nameField}`] = field.valueField;
@@ -38,12 +41,36 @@ export class UserRepository {
       } else {
         doc = await this.userStore.findOne(filter, getData, {}).select(excludeFields);
       }
+
       return doc;
     } catch (error: any) {
       throw new ApiError(
-        'Error to find user',
+        'Internal Error',
         httpStatus.INTERNAL_SERVER_ERROR,
         'Ha ocurrido un error inesperado al buscar el usuario',
+        true,
+        error.message
+      );
+    }
+  }
+
+  public async getUsers(field: { nameField: string; valueField: any }, get?: string, getFullData?: boolean) {
+    const getData = get == null ? null : get;
+    const filter: any = {};
+    filter[`${field.nameField}`] = field.valueField;
+    try {
+      let doc;
+      if (getFullData) {
+        doc = await this.userStore.find(filter, getData, {});
+      } else {
+        doc = await this.userStore.find(filter, getData, {}).select(excludeFields);
+      }
+      return doc;
+    } catch (error: any) {
+      throw new ApiError(
+        'Internal Error',
+        httpStatus.INTERNAL_SERVER_ERROR,
+        'Ha ocurrido un error inesperado al buscar los usuarios',
         true,
         error.message
       );
@@ -67,7 +94,7 @@ export class UserRepository {
       }
     } catch (error: any) {
       throw new ApiError(
-        'Error to find user by regex',
+        'Internal Error',
         httpStatus.INTERNAL_SERVER_ERROR,
         'Ha ocurrido un error inesperado al buscar los usuarios por nicknames',
         true,

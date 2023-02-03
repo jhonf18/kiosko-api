@@ -5,19 +5,24 @@ import { generateNickName } from './../utils/nickname';
 import { generateToken } from './../utils/tokens';
 import { loginUserInput } from './dto/signin';
 
+import { deleteFields } from '../utils/deleteFields';
 import { HashingPassword } from '../utils/hashingPassword';
+import { ValidatorUser } from '../utils/validationsUser';
 import { ApiError } from './../../config/errors/ApiError';
 import { httpStatus } from './../../config/errors/httpStatusCodes';
 import { UserService } from './../../shared/services/user';
-import { ValidatorUser } from './../utils/validations';
 import { creatUserInput } from './dto/signup';
+import { BlackListRepository } from './repository/blackList';
 
 export class AuthService {
   private hashingPassword = new HashingPassword();
 
-  constructor(private userService: UserService, private validatorUser: ValidatorUser) {}
+  constructor(
+    private userService: UserService,
+    private validatorUser: ValidatorUser,
+    private blackListRepo: BlackListRepository
+  ) {}
 
-  // TODO: set token in cookie
   public async signup(userInput: creatUserInput) {
     const fields: Array<string> = ['name', 'email', 'password_1', 'password_2'];
 
@@ -34,7 +39,7 @@ export class AuthService {
     const password = await this.hashingPassword.encryptPassword(userInput.password_1);
     const nickname = await generateNickName(nicknameWithoutSpaces, this.userService, id);
 
-    await this.userService.createUser({
+    const userRecord = await this.userService.createUser({
       name: userInput.name,
       email: userInput.email,
       password,
@@ -44,11 +49,12 @@ export class AuthService {
     });
 
     const token = generateToken(id);
+    const userToClient = deleteFields(userRecord, ['password']);
 
-    return { message: 'Usuario creado satisfactoriamente', token };
+    return { token, user: userToClient };
   }
 
-  public async signin(userInput: loginUserInput, admin?: boolean) {
+  public async signin(userInput: loginUserInput, _admin?: boolean) {
     const fields: Array<string> = ['password', 'nickname'];
 
     const validatorSignup = await this.validatorUser.Signup(userInput, fields);
@@ -61,9 +67,9 @@ export class AuthService {
       throw new ApiError('Not Found', httpStatus.NOT_FOUND, 'Email o contraseña incorrectos', true);
     }
 
-    if (!admin && userStore.role === 'ROLE_ADMIN') {
-      throw new ApiError('Forbiden', httpStatus.FORBIDDEN, 'No es posible acceder a este sitio', true);
-    }
+    // if (!admin && userStore.role === 'ROLE_ADMIN') {
+    //   throw new ApiError('Forbiden', httpStatus.FORBIDDEN, 'No es posible acceder a este sitio', true);
+    // }
 
     const comparePassword = await this.hashingPassword.comparePassword(userStore.password, userInput.password);
     if (!comparePassword) {
@@ -71,9 +77,12 @@ export class AuthService {
     }
 
     const token = generateToken(userStore.id);
+    const userToClient = deleteFields(userStore, ['password']);
 
-    return { token };
+    return { token, user: userToClient };
   }
 
-  public async signout() {}
+  public async signout(idToken: string) {
+    await this.blackListRepo.saveToken(idToken);
+  }
 }
