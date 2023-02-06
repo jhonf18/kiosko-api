@@ -1,4 +1,5 @@
 import * as awilix from 'awilix';
+import { BranchOfficeModel } from './../modules/backOffice/schemas/branchOffice';
 import { UserRepository } from './repository/user';
 import { UserModel } from './schemas/user';
 import { UserService } from './services/user';
@@ -12,6 +13,7 @@ container.register({
   // Repositories
   userRepo: awilix.asClass(UserRepository),
 
+  branchOfficeStore: awilix.asValue(BranchOfficeModel),
   // Stores
   userStore: awilix.asValue(UserModel)
 });

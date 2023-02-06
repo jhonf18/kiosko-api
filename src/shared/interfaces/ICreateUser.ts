@@ -6,4 +6,5 @@ export interface ICreateUser {
   password: string;
   avatar?: string;
   role: string;
+  branchOffice: string;
 }

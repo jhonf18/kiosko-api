@@ -1,17 +1,25 @@
 import { ApiError } from '../../config/errors/ApiError';
 import { httpStatus } from '../../config/errors/httpStatusCodes';
 import { UserDocument, UserModel } from '../schemas/user';
+import { BranchOfficeModel } from './../../modules/backOffice/schemas/branchOffice';
 import { ICreateUser } from './../interfaces/ICreateUser';
 
-// add field with minus sign to not send to client
+// Add field with minus sign to not send to client
 const excludeFields = '-password';
 
 export class UserRepository {
-  constructor(private userStore: typeof UserModel) {}
+  constructor(private userStore: typeof UserModel, private branchOfficeStore: typeof BranchOfficeModel) {}
 
   public async saveUser(userInput: ICreateUser) {
-    const user = new this.userStore(userInput);
+    let user = new this.userStore(userInput);
 
+    // Find branch office
+    const branchOfficeStore = await this.branchOfficeStore.findOne({ id: userInput.branchOffice }, '_id');
+    if (!branchOfficeStore) {
+      throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'El id de la sucursal es incorrecto', true);
+    }
+
+    user.branch_office = branchOfficeStore._id;
     try {
       let userDB = await user.save();
       return userDB;
@@ -101,5 +109,25 @@ export class UserRepository {
         error.message
       );
     }
+  }
+
+  public async findUsersFromArrayIdsToIdkey(array: Array<string>) {
+    let _ids = [];
+
+    for await (const userID of array) {
+      const user = await this.getUser({ nameField: 'id', valueField: userID }, '_id');
+      if (!user) {
+        throw new ApiError(
+          'Bad Request',
+          httpStatus.BAD_REQUEST,
+          'No se ha encontrado el id del usuario al buscar.',
+          true,
+          'No se ha encontrado el _id del usuario al buscar, path:/userService/findUsersFromArrayIdsToIdkey'
+        );
+      }
+      _ids.push(user?._id);
+    }
+
+    return _ids;
   }
 }

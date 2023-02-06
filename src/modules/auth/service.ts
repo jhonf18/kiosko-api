@@ -5,6 +5,7 @@ import { generateNickName } from './../utils/nickname';
 import { generateToken } from './../utils/tokens';
 import { loginUserInput } from './dto/signin';
 
+import { getKeyByValue } from '../../utilities';
 import { deleteFields } from '../utils/deleteFields';
 import { HashingPassword } from '../utils/hashingPassword';
 import { ValidatorUser } from '../utils/validationsUser';
@@ -24,30 +25,42 @@ export class AuthService {
   ) {}
 
   public async signup(userInput: creatUserInput) {
-    const fields: Array<string> = ['name', 'email', 'password_1', 'password_2'];
+    // Validate fields
+    const fields: Array<string> = ['name', 'email', 'password_1', 'password_2', 'role', 'branchOffice'];
 
     const validatorSignup = await this.validatorUser.Signup(userInput, fields);
     if (validatorSignup.error) {
       throw new ApiError('CUSTOM', httpStatus.BAD_REQUEST, 'Error in the inputs', true, validatorSignup.errors);
     }
 
+    // Validate that the role sent is among the available ones and that it is different from admin
+    const roleFound = getKeyByValue(ROLES, userInput.role);
+    if (!roleFound || roleFound === 'ROLE_ADMIN') {
+      throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'El rol no es correcto', true);
+    }
+
+    // Create user ID and create nickname
     const id: string = uuidv4();
     const normalizeNickname = normalizeString(userInput.name);
     const nicknameLower = normalizeNickname.toLowerCase();
     const nicknameWithoutSpaces = nicknameLower.replace(/ /g, '');
-
-    const password = await this.hashingPassword.encryptPassword(userInput.password_1);
     const nickname = await generateNickName(nicknameWithoutSpaces, this.userService, id);
 
+    // Hashing password
+    const password = await this.hashingPassword.encryptPassword(userInput.password_1);
+
+    // Save user in DB
     const userRecord = await this.userService.createUser({
       name: userInput.name,
       email: userInput.email,
       password,
       nickname,
       id,
-      role: ROLES.WAITER
+      role: userInput.role,
+      branchOffice: userInput.branchOffice
     });
 
+    // Generate token and remove fields that will no be sent to the client
     const token = generateToken(id);
     const userToClient = deleteFields(userRecord, ['password']);
 

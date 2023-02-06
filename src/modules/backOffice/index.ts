@@ -1,6 +1,6 @@
 import express from 'express';
 import { MiddlewareAuthentication } from './../../shared/middleware';
-import routesAdmin from './controllers/admin';
+import routesAdmin from './routes/admin';
 
 const routesBackOffice = express();
 

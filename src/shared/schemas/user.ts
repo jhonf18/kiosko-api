@@ -1,9 +1,13 @@
-import { getModelForClass, modelOptions, prop } from '@typegoose/typegoose';
+import { getModelForClass, modelOptions, prop, Ref } from '@typegoose/typegoose';
 import { Document } from 'mongoose';
+import { BranchOfficeSchema } from '../../modules/backOffice/schemas/branchOffice';
 
 export type UserDocument = UserSchema & Document;
 
-@modelOptions({ options: { customName: 'user' } })
+@modelOptions({
+  schemaOptions: { collection: 'users' },
+  options: { customName: 'user' }
+})
 export class UserSchema {
   @prop({ type: () => String, unique: true, required: true })
   public id!: string;
@@ -25,6 +29,12 @@ export class UserSchema {
 
   @prop({ type: () => String, required: false })
   avatar?: string;
+
+  @prop({ ref: () => BranchOfficeSchema, required: true })
+  branch_office: Ref<BranchOfficeSchema>;
+
+  @prop({ type: () => Boolean, required: false, default: false })
+  active?: boolean;
 
   // Timestamps
   @prop({ default: Date.now(), type: () => Date })

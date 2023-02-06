@@ -19,12 +19,10 @@ export const logError = (error: Error | ApiError | any) => {
 };
 
 process.on('uncaughtException', (error: Error | ApiError) => {
-  console.log(error);
   logError(error);
 });
 
 process.on('unhandledRejection', (error: Error | ApiError) => {
-  console.log(error);
   if (!isOperationalError(error)) {
     logError(error.message);
     process.exit(1);

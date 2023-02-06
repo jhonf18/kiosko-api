@@ -2,7 +2,7 @@ import { getModelForClass, modelOptions, prop, Ref } from '@typegoose/typegoose'
 import { UserSchema } from '../../../shared/schemas/user';
 
 @modelOptions({ options: { customName: 'branch_office' } })
-class BranchOfficeSchema {
+export class BranchOfficeSchema {
   @prop({ type: () => String, required: true, unique: true })
   id: string;
 

@@ -32,15 +32,4 @@ export class UserService {
   public async findUserByRegex(regex: string) {
     return this.userRepo.findUsersByNicknameWithRegex(regex);
   }
-
-  public async findUsersFromArrayIdsToIdkey(array: Array<string>) {
-    let _ids = [];
-
-    for await (const userID of array) {
-      const user = await this.findUserById(userID, '_id');
-      _ids.push(user?._id);
-    }
-
-    return _ids;
-  }
 }

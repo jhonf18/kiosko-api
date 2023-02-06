@@ -5,6 +5,7 @@ import { response } from '../../config/response/response';
 import { container } from '../../shared';
 import { ValidatorUser } from '../utils/validationsUser';
 import { httpStatus } from './../../config/errors/httpStatusCodes';
+import { ALL_ROLES } from './../../shared/config/roles';
 import { MiddlewareAuthentication } from './../../shared/middleware';
 import { BlackListRepository } from './repository/blackList';
 import { AuthService } from './service';
@@ -29,7 +30,9 @@ routesAuth.post(
         name: req.body.name,
         email: req.body.email,
         password_1: req.body.password_1,
-        password_2: req.body.password_2
+        password_2: req.body.password_2,
+        role: req.body.role,
+        branchOffice: req.body.branch_office
       });
 
       response([user], 'OK', httpStatus.CREATED, res);
@@ -56,7 +59,7 @@ routesAuth.post('/signin', async (req: Request, res: Response, next: NextFunctio
 // Signout of users
 routesAuth.post(
   '/signout',
-  new MiddlewareAuthentication(['ROLE_ADMIN', 'ROLE_LEADER', 'ROLE_WAITER']).verifyToken,
+  new MiddlewareAuthentication([...ALL_ROLES]).verifyToken,
   async (_req, res: Response, next: NextFunction) => {
     try {
       await authService.signout(res.locals.tokenID);

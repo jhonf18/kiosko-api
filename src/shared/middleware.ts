@@ -4,6 +4,7 @@ import { JWT_SECRET } from '../config/env/env';
 import { ApiError } from '../config/errors/ApiError';
 import { httpStatus } from '../config/errors/httpStatusCodes';
 import { BlackListRepository } from './../modules/auth/repository/blackList';
+import { BranchOfficeModel } from './../modules/backOffice/schemas/branchOffice';
 import { UserRepository } from './repository/user';
 import { UserModel } from './schemas/user';
 
@@ -13,7 +14,7 @@ interface JwtPayloadApp extends jwt.JwtPayload {
 }
 export class MiddlewareAuthentication {
   private blackListRepo = new BlackListRepository();
-  private userRepo = new UserRepository(UserModel);
+  private userRepo = new UserRepository(UserModel, BranchOfficeModel);
   private rolesAccepted: Array<string>;
 
   constructor(rolesAccepted: Array<string>) {
