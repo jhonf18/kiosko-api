@@ -22,11 +22,10 @@ export class BranchOfficeService {
       id: uuidv4(),
       name: branchOfficeInput.name,
       address: branchOfficeInput.address,
-      employees: branchOfficeInput.employees,
-      leaders: branchOfficeInput.leaders
+      employees: branchOfficeInput.employees
     });
 
-    return { branch_office: deleteFields(branchOfficeRecord, ['employees', 'leaders']) };
+    return { branch_office: deleteFields(branchOfficeRecord, ['employees']) };
   }
 
   public async getBranchOffices(getData?: string) {
@@ -53,17 +52,7 @@ export class BranchOfficeService {
     }
   }
 
-  public async updateBranchOffice(id: string, branchOfficeInput: updateBranchOfficeInput) {
-    // TODO: Editar sucursal según el id
-    // Debe retornar la sucursal actualizada
-    // validate fields
-    const fields: Array<string> = ['name', 'address'];
-
-    const validatorSignup = isNotEmpty(branchOfficeInput, fields);
-    if (validatorSignup.error) {
-      throw new ApiError('CUSTOM', httpStatus.BAD_REQUEST, 'Error in the inputs', true, validatorSignup.errors);
-    }
-
+  public async updateBranchOffice(id: string, branchOfficeInput: updateBranchOfficeInput, addEmployee?: boolean) {
     if (!id) {
       throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'No se puede leer el ID', true);
     }
@@ -75,19 +64,14 @@ export class BranchOfficeService {
 
     const branchOfficeRecord = await this.branchOfficeRepo.update(
       { id: branchOfficeStore.id },
-      {
-        name: branchOfficeInput.name,
-        address: branchOfficeInput.address,
-        employees: branchOfficeInput.employees,
-        leaders: branchOfficeInput.leaders
-      }
+      branchOfficeInput,
+      addEmployee
     );
 
     return { branch_office: branchOfficeRecord };
   }
 
   public async deleteBranchOffice(id: string) {
-    // TODO: Editar perfil del usuario
     if (!id) {
       throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'No se puede leer el ID', true);
     }
@@ -99,4 +83,11 @@ export class BranchOfficeService {
 
     return true;
   }
+
+  public removeAUserFromBranchOffice = async (_idBranch: Object, typeUser: any, _id: any) => {
+    let toUpdate: { $pull: { [key: string]: any } } = { $pull: {} };
+    toUpdate.$pull[typeUser] = _id;
+
+    return await this.branchOfficeRepo.deleteUserFromArray(_idBranch, toUpdate);
+  };
 }

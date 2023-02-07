@@ -2,7 +2,7 @@ export interface IUpdateUser {
   name: string;
   password: string;
   role: string;
-  avatar: string;
-  branch_office: string;
+  avatar?: string;
+  branchOffice: string;
   active: boolean;
 }

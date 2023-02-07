@@ -1,6 +1,7 @@
 import { ApiError } from '../../config/errors/ApiError';
 import { httpStatus } from '../../config/errors/httpStatusCodes';
 import { UserDocument, UserModel } from '../schemas/user';
+import { IUpdateUser } from './../../modules/backOffice/interfaces/userManagment';
 import { BranchOfficeModel } from './../../modules/backOffice/schemas/branchOffice';
 import { ICreateUser } from './../interfaces/ICreateUser';
 
@@ -13,8 +14,15 @@ export class UserRepository {
   public async saveUser(userInput: ICreateUser) {
     let user = new this.userStore(userInput);
 
+    console.log(user);
+
     // Find branch office
-    const branchOfficeStore = await this.branchOfficeStore.findOne({ id: userInput.branchOffice }, '_id');
+    const branchOfficeStore = await this.branchOfficeStore.findOneAndUpdate(
+      { id: userInput.branchOffice },
+      {
+        $push: { employees: user._id }
+      }
+    );
     if (!branchOfficeStore) {
       throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'El id de la sucursal es incorrecto', true);
     }
@@ -115,7 +123,7 @@ export class UserRepository {
     let _ids = [];
 
     for await (const userID of array) {
-      const user = await this.getUser({ nameField: 'id', valueField: userID }, '_id');
+      let user = await this.getUser({ nameField: 'id', valueField: userID }, '_id');
       if (!user) {
         throw new ApiError(
           'Bad Request',
@@ -129,5 +137,50 @@ export class UserRepository {
     }
 
     return _ids;
+  }
+
+  public async updateUser(id: string, userUpdate: IUpdateUser) {
+    const userObj = JSON.parse(JSON.stringify(userUpdate));
+
+    // Find branch office
+    const branchOfficeStore = await this.branchOfficeStore.findOne({ id: userUpdate.branchOffice }, '_id');
+    if (!branchOfficeStore) {
+      throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'El id de la sucursal es incorrecto', true);
+    }
+
+    userObj.branch_office = branchOfficeStore._id;
+
+    try {
+      return await this.userStore.findOneAndUpdate({ id }, userObj, { new: true }).select('-_id -__v');
+    } catch (error: any) {
+      throw new ApiError(
+        'Internal Error',
+        httpStatus.INTERNAL_SERVER_ERROR,
+        'Ha ocurrido un error inesperado al actualizar el usuario',
+        true,
+        error.message
+      );
+    }
+  }
+
+  /**
+   *
+   * @param conditions {Object} This is the filter to search for documents and then delete them
+   * @returns Returns a promise of type number, if the number = 0 then no docs matched the filter
+   */
+  public async delete(conditions: Object): Promise<number> {
+    try {
+      const result = await this.userStore.deleteOne(conditions);
+
+      return result.deletedCount;
+    } catch (error: any) {
+      throw new ApiError(
+        'Internal Error',
+        httpStatus.INTERNAL_SERVER_ERROR,
+        'Ha ocurrido un error inesperado al eliminar el usuario',
+        true,
+        error.message
+      );
+    }
   }
 }

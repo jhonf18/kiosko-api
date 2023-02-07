@@ -2,6 +2,7 @@ import { ApiError } from './../../../config/errors/ApiError';
 import { httpStatus } from './../../../config/errors/httpStatusCodes';
 import { UserRepository } from './../../../shared/repository/user';
 import { UserModel } from './../../../shared/schemas/user';
+import { getElementsDifferentsOfTwoArrays } from './../../../utilities/index';
 import { parameterizeSearchWithParams } from './../../utils/parameterizeSearchWithParams';
 import { IBranchOffice, IUpdateBranchOffice } from './../interfaces/branchOffice';
 import { BranchOfficeModel } from './../schemas/branchOffice';
@@ -9,23 +10,37 @@ import { BranchOfficeModel } from './../schemas/branchOffice';
 export class BranchOfficeRepository {
   constructor(private userRepo: UserRepository, private branchOfficeStore: typeof BranchOfficeModel) {}
 
+  private getKeysId(array: Array<any>): Array<any> {
+    let arr: Array<any> = [];
+    array.forEach(el => {
+      arr.push(el._id);
+    });
+
+    return arr;
+  }
+
   private async preparateDataForDB(
-    branchOffice: IBranchOffice | IUpdateBranchOffice
-  ): Promise<IBranchOffice | IUpdateBranchOffice> {
+    branchOffice: IBranchOffice | { employees?: Array<string> },
+    branchOfficeStore?: any
+  ): Promise<IBranchOffice | any> {
     let employees = [];
-    let leaders = [];
 
     try {
       if (branchOffice.employees && branchOffice.employees.length !== 0) {
         employees = await this.userRepo.findUsersFromArrayIdsToIdkey(branchOffice!.employees);
       }
 
-      if (branchOffice.leaders && branchOffice.leaders.length !== 0) {
-        leaders = await this.userRepo.findUsersFromArrayIdsToIdkey(branchOffice!.leaders);
+      if (branchOfficeStore) {
+        branchOffice = branchOfficeStore;
+        if (branchOffice.employees) {
+          const ids = this.getKeysId(branchOffice.employees);
+
+          branchOffice.employees = branchOffice.employees.concat(getElementsDifferentsOfTwoArrays(employees, ids));
+        }
+      } else {
+        branchOffice.employees = employees;
       }
 
-      branchOffice.employees = employees;
-      branchOffice.leaders = leaders;
       return branchOffice;
     } catch (error: any) {
       if (error instanceof ApiError) {
@@ -42,7 +57,7 @@ export class BranchOfficeRepository {
     }
   }
 
-  public async save(branchOffice: IBranchOffice) {
+  public async save(branchOffice: Object) {
     const branchOfficeOK = await this.preparateDataForDB(branchOffice);
     const branchOfficeStore = new this.branchOfficeStore(branchOfficeOK);
 
@@ -77,7 +92,7 @@ export class BranchOfficeRepository {
       const getDataArray = getData.split(' ');
       populate = [];
       for (let i = 0; i < getDataArray.length; i++) {
-        if (getDataArray[i].trim() === 'employees' || getDataArray[i] === 'leaders') {
+        if (getDataArray[i].trim() === 'employees') {
           populate.push({ name: getDataArray[i] });
         }
       }
@@ -85,7 +100,7 @@ export class BranchOfficeRepository {
 
     let populateData: any = [];
     populate?.forEach(el => {
-      if (el.name === 'employees' || el.name === 'leaders') {
+      if (el.name === 'employees') {
         populateData.push({
           path: el.name,
           model: UserModel,
@@ -113,11 +128,11 @@ export class BranchOfficeRepository {
     getData?: string,
     populate?: Array<{ name: string; populate?: Array<string> }>
   ) {
-    const dataForNotSendDefault = '-_id';
+    const dataForNotSendDefault = '';
     const dataForNotSendIfNotPopulated = `${dataForNotSendDefault} -password -__v`;
 
     if (getData) {
-      const parametrizationSearchParams = parameterizeSearchWithParams(getData, 'password _id __v');
+      const parametrizationSearchParams = parameterizeSearchWithParams(getData, 'password -_id __v');
       getData = parametrizationSearchParams.select;
     } else {
       getData = '';
@@ -129,7 +144,7 @@ export class BranchOfficeRepository {
       const getDataArray = getData.split(' ');
       populate = [];
       for (let i = 0; i < getDataArray.length; i++) {
-        if (getDataArray[i].trim() === 'employees' || getDataArray[i] === 'leaders') {
+        if (getDataArray[i].trim() === 'employees') {
           populate.push({ name: getDataArray[i] });
         }
       }
@@ -137,7 +152,7 @@ export class BranchOfficeRepository {
 
     let populateData: any = [];
     populate?.forEach(el => {
-      if (el.name === 'employees' || el.name === 'leaders') {
+      if (el.name === 'employees') {
         populateData.push({
           path: el.name,
           model: UserModel,
@@ -154,15 +169,22 @@ export class BranchOfficeRepository {
       throw new ApiError(
         'Internal Error',
         httpStatus.INTERNAL_SERVER_ERROR,
-        'Ha ocurrido un error inesperado al obtener las sucursales',
+        'Ha ocurrido un error inesperado al obtener la sucursale',
         true,
         error.message
       );
     }
   }
 
-  public async update(conditions: Object, branchOffice: IUpdateBranchOffice) {
-    const branchOfficeOK = await this.preparateDataForDB(branchOffice);
+  public async update(conditions: Object, branchOffice: IUpdateBranchOffice, addEmployee?: boolean) {
+    let branchOfficeStore: any;
+    if (addEmployee) {
+      branchOfficeStore = await this.findOne(conditions, 'employees');
+    } else {
+      branchOfficeStore = null;
+    }
+
+    const branchOfficeOK = await this.preparateDataForDB(branchOffice, branchOfficeStore);
     try {
       const updateBranchOfficeStore = await this.branchOfficeStore.findOneAndUpdate(conditions, branchOfficeOK, {
         new: true
@@ -172,7 +194,7 @@ export class BranchOfficeRepository {
       throw new ApiError(
         'Internal Error',
         httpStatus.INTERNAL_SERVER_ERROR,
-        'Ha ocurrido un error inesperado al obtener las sucursales',
+        'Ha ocurrido un error inesperado al actualizar las sucursales',
         true,
         error.message
       );
@@ -194,6 +216,24 @@ export class BranchOfficeRepository {
         'Internal Error',
         httpStatus.INTERNAL_SERVER_ERROR,
         'Ha ocurrido un error inesperado al eliminar la sucursal',
+        true,
+        error.message
+      );
+    }
+  }
+
+  public async deleteUserFromArray(_id: any, update: Object) {
+    try {
+      console.log(update);
+      const updateBranchOfficeStore = await this.branchOfficeStore.findByIdAndUpdate(_id, update, {
+        new: true
+      });
+      return updateBranchOfficeStore;
+    } catch (error: any) {
+      throw new ApiError(
+        'Internal Error',
+        httpStatus.INTERNAL_SERVER_ERROR,
+        'Ha ocurrido un error inesperado al eliminar el usuario de la sucursal',
         true,
         error.message
       );

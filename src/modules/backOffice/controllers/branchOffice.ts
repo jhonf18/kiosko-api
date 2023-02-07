@@ -33,8 +33,7 @@ export const createBranchOfficeController = async (req: Request, res: Response, 
     let data = await branchOfficeService.createBranchOffice({
       name: req.body.name,
       address: req.body.address,
-      employees: req.body.employees,
-      leaders: req.body.leaders
+      employees: req.body.employees
     });
 
     response([data], 'OK', httpStatus.CREATED, res);
@@ -48,8 +47,7 @@ export const updateBranchOfficeController = async (req: Request, res: Response, 
     let data = await branchOfficeService.updateBranchOffice(req.params.idBranchOffice, {
       name: req.body.name,
       address: req.body.address,
-      employees: req.body.employees,
-      leaders: req.body.leaders
+      employees: req.body.employees
     });
 
     response([data], 'OK', httpStatus.CREATED, res);

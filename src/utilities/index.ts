@@ -25,3 +25,7 @@ export const getIndexOfElmentInArray = (array: Array<any>, el: any): boolean | n
   }
   return false;
 };
+
+export const getElementsDifferentsOfTwoArrays = (array1: Array<any>, array2: Array<any>): Array<any> => {
+  return array1.filter(x => !array2.includes(x));
+};

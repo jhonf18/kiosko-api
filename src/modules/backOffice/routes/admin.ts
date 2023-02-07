@@ -6,6 +6,7 @@ import {
   getBranchOfficesController,
   updateBranchOfficeController
 } from './../controllers/branchOffice';
+import { deleteUserController, updateUserController } from './../controllers/userManagment';
 
 const routesAdmin = express();
 
@@ -24,14 +25,10 @@ routesAdmin.post('/create-branch-office', createBranchOfficeController);
 // Methods PUT
 
 routesAdmin.put('/update-branch-office/:idBranchOffice', updateBranchOfficeController);
-routesAdmin.put('/update-user/:idUser', (_req, res) => {
-  res.send('Actualizar usuario');
-});
+routesAdmin.put('/update-user/:idUser', updateUserController);
 
 // Methods DELETE
 routesAdmin.delete('/delete-branch-office/:idBranchOffice', deleteBranchOfficeController);
-routesAdmin.delete('/delete-user/:idUser', (_req, res) => {
-  res.send('Eliminar usuario');
-});
+routesAdmin.delete('/delete-user/:idUser', deleteUserController);
 
 export default routesAdmin;
