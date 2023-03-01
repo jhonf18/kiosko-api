@@ -3,6 +3,7 @@ import { httpStatus } from '../../config/errors/httpStatusCodes';
 import { UserDocument, UserModel } from '../schemas/user';
 import { IUpdateUser } from './../../modules/backOffice/interfaces/userManagment';
 import { BranchOfficeModel } from './../../modules/backOffice/schemas/branchOffice';
+import { parameterizeSearchWithParams } from './../../modules/utils/parameterizeSearchWithParams';
 import { ICreateUser } from './../interfaces/ICreateUser';
 
 // Add field with minus sign to not send to client
@@ -13,8 +14,6 @@ export class UserRepository {
 
   public async saveUser(userInput: ICreateUser) {
     let user = new this.userStore(userInput);
-
-    console.log(user);
 
     // Find branch office
     const branchOfficeStore = await this.branchOfficeStore.findOneAndUpdate(
@@ -44,21 +43,35 @@ export class UserRepository {
 
   public async getUser(
     field: { nameField: string; valueField: any },
-    get?: string,
+    getData?: string,
     getFullData?: boolean
   ): Promise<UserDocument | null> {
-    const getData = get == null ? null : get;
     const filter: any = {};
     filter[`${field.nameField}`] = field.valueField;
-    try {
-      let doc;
-      if (getFullData) {
-        doc = await this.userStore.findOne(filter, getData, {});
-      } else {
-        doc = await this.userStore.findOne(filter, getData, {}).select(excludeFields);
-      }
 
-      return doc;
+    let populate = [];
+
+    if (!getFullData && getData) {
+      const parametrizationSearchParams = parameterizeSearchWithParams(getData, 'password _id __v', '-_id');
+      getData = parametrizationSearchParams.select;
+
+      if (parametrizationSearchParams.populateOneLevel.length > 0) {
+        for (let populate of parametrizationSearchParams.populateOneLevel) {
+          if (populate.path === 'employees') {
+            populate.model = UserModel;
+          }
+          populate.select += '-_id';
+        }
+
+        populate = parametrizationSearchParams.populateOneLevel;
+      }
+    } else {
+      getData = '';
+    }
+
+    try {
+      if (getFullData) return await this.userStore.findOne(filter);
+      else return await this.userStore.findOne(filter, getData).populate(populate);
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',
@@ -70,23 +83,38 @@ export class UserRepository {
     }
   }
 
-  public async getUsers(field: { nameField: string; valueField: any }, get?: string, getFullData?: boolean) {
-    const getData = get == null ? null : get;
+  public async getUsers(field: { nameField: string; valueField: any }, getData?: string, getFullData?: boolean) {
     const filter: any = {};
     filter[`${field.nameField}`] = field.valueField;
-    try {
-      let doc;
-      if (getFullData) {
-        doc = await this.userStore.find(filter, getData, {});
-      } else {
-        doc = await this.userStore.find(filter, getData, {}).select(excludeFields);
+
+    let populate = [];
+
+    if (!getFullData && getData) {
+      const parametrizationSearchParams = parameterizeSearchWithParams(getData, 'password _id __v', '-_id');
+      getData = parametrizationSearchParams.select;
+
+      if (parametrizationSearchParams.populateOneLevel.length > 0) {
+        for (let populate of parametrizationSearchParams.populateOneLevel) {
+          if (populate.path === 'employees') {
+            populate.model = UserModel;
+          }
+          populate.select += '-_id';
+        }
+
+        populate = parametrizationSearchParams.populateOneLevel;
       }
-      return doc;
+    } else {
+      getData = '';
+    }
+
+    try {
+      if (getFullData) return await this.userStore.findOne(filter);
+      else return await this.userStore.findOne(filter, getData).populate(populate);
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',
         httpStatus.INTERNAL_SERVER_ERROR,
-        'Ha ocurrido un error inesperado al buscar los usuarios',
+        'Ha ocurrido un error inesperado al buscar el usuario',
         true,
         error.message
       );

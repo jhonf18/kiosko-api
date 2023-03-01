@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { httpStatus } from './../../../config/errors/httpStatusCodes';
 import { response } from './../../../config/response/response';
+import { ROLES } from './../../../shared/config/roles';
 import { userServiceManagment } from './../dependencyInjector';
 
 export const updateUserController = async (req: Request, res: Response, next: NextFunction) => {
@@ -27,4 +28,8 @@ export const deleteUserController = async (req: Request, res: Response, next: Ne
   } catch (error) {
     next(error);
   }
+};
+
+export const getRolesController = (_req: Request, res: Response) => {
+  return response([ROLES], 'OK', httpStatus.OK, res);
 };

@@ -1,7 +1,7 @@
 import { ICreateUser } from '../interfaces/ICreateUser';
 import { UserRepository } from '../repository/user';
 import { UserDocument } from '../schemas/user';
-
+// TODO: Falta poblar bien los datos, que al usuario no se le envien los _ids ni password
 export class UserService {
   constructor(private userRepo: UserRepository) {}
 

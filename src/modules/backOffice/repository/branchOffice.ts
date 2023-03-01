@@ -75,42 +75,29 @@ export class BranchOfficeRepository {
     }
   }
 
-  public async find(getData?: string, populate?: Array<{ name: string; populate?: Array<string> }>) {
-    const dataForNotSendDefault = '-_id';
-    const dataForNotSendIfNotPopulated = `${dataForNotSendDefault} -password -__v`;
+  public async find(getData?: string) {
+    let populate = [];
 
     if (getData) {
-      const parametrizationSearchParams = parameterizeSearchWithParams(getData, 'password _id __v');
+      const parametrizationSearchParams = parameterizeSearchWithParams(getData, '_id __v', '-_id');
       getData = parametrizationSearchParams.select;
+
+      if (parametrizationSearchParams.populateOneLevel.length > 0) {
+        for (let populate of parametrizationSearchParams.populateOneLevel) {
+          if (populate.path === 'employees') {
+            populate.model = UserModel;
+          }
+          populate.select += '-_id';
+        }
+
+        populate = parametrizationSearchParams.populateOneLevel;
+      }
     } else {
       getData = '';
     }
 
-    getData = `${getData} ${dataForNotSendDefault}`;
-
-    if (!populate) {
-      const getDataArray = getData.split(' ');
-      populate = [];
-      for (let i = 0; i < getDataArray.length; i++) {
-        if (getDataArray[i].trim() === 'employees') {
-          populate.push({ name: getDataArray[i] });
-        }
-      }
-    }
-
-    let populateData: any = [];
-    populate?.forEach(el => {
-      if (el.name === 'employees') {
-        populateData.push({
-          path: el.name,
-          model: UserModel,
-          select: el.populate ? `${el.populate.join(' ')} ${dataForNotSendDefault}` : dataForNotSendIfNotPopulated
-        });
-      }
-    });
-
     try {
-      const branchOfficesStore = await this.branchOfficeStore.find({}, getData).populate(populateData);
+      const branchOfficesStore = await this.branchOfficeStore.find({}, getData).populate(populate);
       return branchOfficesStore;
     } catch (error: any) {
       throw new ApiError(
@@ -123,46 +110,31 @@ export class BranchOfficeRepository {
     }
   }
 
-  public async findOne(
-    conditions: Object,
-    getData?: string,
-    populate?: Array<{ name: string; populate?: Array<string> }>
-  ) {
-    const dataForNotSendDefault = '';
-    const dataForNotSendIfNotPopulated = `${dataForNotSendDefault} -password -__v`;
+  public async findOne(conditions: Object, getData?: string, getKeyID?: boolean) {
+    let populate = [];
 
     if (getData) {
-      const parametrizationSearchParams = parameterizeSearchWithParams(getData, 'password -_id __v');
+      const parametrizationSearchParams = !getKeyID
+        ? parameterizeSearchWithParams(getData, 'password _id __v', '-_id')
+        : parameterizeSearchWithParams(getData, 'password _id __v');
       getData = parametrizationSearchParams.select;
+
+      if (parametrizationSearchParams.populateOneLevel.length > 0) {
+        for (let populate of parametrizationSearchParams.populateOneLevel) {
+          if (populate.path === 'employees') {
+            populate.model = UserModel;
+          }
+          populate.select += '-_id';
+        }
+
+        populate = parametrizationSearchParams.populateOneLevel;
+      }
     } else {
       getData = '';
     }
 
-    getData = `${getData} ${dataForNotSendDefault}`;
-
-    if (!populate) {
-      const getDataArray = getData.split(' ');
-      populate = [];
-      for (let i = 0; i < getDataArray.length; i++) {
-        if (getDataArray[i].trim() === 'employees') {
-          populate.push({ name: getDataArray[i] });
-        }
-      }
-    }
-
-    let populateData: any = [];
-    populate?.forEach(el => {
-      if (el.name === 'employees') {
-        populateData.push({
-          path: el.name,
-          model: UserModel,
-          select: el.populate ? `${el.populate.join(' ')} ${dataForNotSendDefault}` : dataForNotSendIfNotPopulated
-        });
-      }
-    });
-
     try {
-      const branchOfficesStore = await this.branchOfficeStore.findOne(conditions, getData).populate(populateData);
+      const branchOfficesStore = await this.branchOfficeStore.findOne(conditions, getData).populate(populate);
 
       return branchOfficesStore;
     } catch (error: any) {
@@ -224,7 +196,6 @@ export class BranchOfficeRepository {
 
   public async deleteUserFromArray(_id: any, update: Object) {
     try {
-      console.log(update);
       const updateBranchOfficeStore = await this.branchOfficeStore.findByIdAndUpdate(_id, update, {
         new: true
       });

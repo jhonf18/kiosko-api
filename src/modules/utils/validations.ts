@@ -3,7 +3,11 @@ export const isNotEmpty = (data: any, fields: string[]) => {
 
   //validar que los campos no esten vacíos
   fields.forEach(field => {
-    if (typeof data[field] == 'undefined' || data[field] === '' || data[field].length === 0) {
+    if (
+      typeof data[field] == 'undefined' ||
+      (typeof data[field] === 'string' && data[field] === '') ||
+      data[field].length === 0
+    ) {
       errors.error = true;
       errors.errors.push({ message: `Este campo no puede estar vacío`, type: `INPUT_${field.toUpperCase()}` });
     }

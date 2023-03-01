@@ -20,7 +20,7 @@ export class UserServiceManagment {
 
   public async updateUser(id: string, userInput: IUpdateUser) {
     // Validate fields
-    const fields: Array<string> = ['name', 'password', 'role', 'branchOffice', 'active'];
+    const fields: Array<string> = ['name', 'role', 'branchOffice', 'active'];
 
     const validatorSignup = await this.validatorUser.Signup(userInput, fields);
     if (validatorSignup.error) {
@@ -34,7 +34,7 @@ export class UserServiceManagment {
       throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'El rol no es correcto', true);
     }
 
-    const userStore = await this.userRepo.getUser({ nameField: 'id', valueField: id }, 'id branch_office');
+    const userStore = await this.userRepo.getUser({ nameField: 'id', valueField: id }, 'id branch_office password');
     if (!userStore) {
       throw new ApiError('Not Found', httpStatus.NOT_FOUND, 'No se ha encontrado el usuario', true);
     }
@@ -73,16 +73,19 @@ export class UserServiceManagment {
     }
 
     // Hashing password
-    const password = await this.hashingPassword.encryptPassword(userInput.password);
+    if (userInput.password) {
+      userStore.password = await this.hashingPassword.encryptPassword(userInput.password);
+    }
 
     // Save user in DB
     const userRecord = await this.userRepo.updateUser(id, {
       name: userInput.name,
-      password,
+      password: userStore.password,
       role: userInput.role,
       branchOffice: userInput.branchOffice,
       active: userInput.active
     });
+
     const userToClient = deleteFields(userRecord!, ['password']);
 
     return { user: userToClient };
