@@ -71,4 +71,13 @@ routesAuth.post(
   }
 );
 
+// Verify token of user
+routesAuth.post(
+  '/verify-token',
+  new MiddlewareAuthentication([...ALL_ROLES]).verifyToken,
+  async (_req: Request, res: Response, _next: NextFunction) => {
+    return response([{ id_user: res.locals.userID }], 'OK', httpStatus.OK, res);
+  }
+);
+
 export default routesAuth;
