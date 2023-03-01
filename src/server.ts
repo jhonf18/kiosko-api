@@ -22,7 +22,7 @@ class Server {
   listen() {
     this.config();
     this.app.listen(this.PORT, () => {
-      logger.info('Server running on port: ' + this.PORT);
+      logger.info(`Server running on port: ${this.PORT}`);
       connectDatabase();
     });
   }
