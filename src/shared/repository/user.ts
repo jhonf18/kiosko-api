@@ -51,16 +51,18 @@ export class UserRepository {
 
     let populate = [];
 
-    if (!getFullData && getData) {
-      const parametrizationSearchParams = parameterizeSearchWithParams(getData, 'password _id __v', '-_id');
+    if (getData) {
+      const parametrizationSearchParams = !getFullData
+        ? parameterizeSearchWithParams(getData, 'password _id __v', '-_id')
+        : parameterizeSearchWithParams(getData, '_id __v');
       getData = parametrizationSearchParams.select;
 
       if (parametrizationSearchParams.populateOneLevel.length > 0) {
         for (let populate of parametrizationSearchParams.populateOneLevel) {
-          if (populate.path === 'employees') {
-            populate.model = UserModel;
+          if (populate.path === 'branch_office') {
+            populate.model = BranchOfficeModel;
           }
-          populate.select += '-_id';
+          populate.select += ' -_id';
         }
 
         populate = parametrizationSearchParams.populateOneLevel;
@@ -70,8 +72,7 @@ export class UserRepository {
     }
 
     try {
-      if (getFullData) return await this.userStore.findOne(filter);
-      else return await this.userStore.findOne(filter, getData).populate(populate);
+      return await this.userStore.findOne(filter, getData).populate(populate);
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',

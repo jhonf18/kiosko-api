@@ -13,8 +13,8 @@ export class UserService {
     return this.userRepo.getUsers({ nameField: 'id', valueField: id }, get);
   }
 
-  public async findUserById(id: string, get?: string): Promise<UserDocument | null> {
-    return this.userRepo.getUser({ nameField: 'id', valueField: id }, get);
+  public async findUserById(id: string, get?: string, getFullData?: boolean): Promise<UserDocument | null> {
+    return this.userRepo.getUser({ nameField: 'id', valueField: id }, get, getFullData);
   }
 
   public async findUserByEmail(email: string, get?: string) {

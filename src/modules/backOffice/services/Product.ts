@@ -30,8 +30,6 @@ export class ProductManagmentService {
     if (typeof productInput.price !== 'number')
       throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'El precio del producto debe ser un número.', true);
 
-    console.log(productInput);
-
     // Find BranchOffice
     const branchOfficeStore = await this.branchOfficeRepo.findOne({ id: productInput.branchOffice }, 'id');
 
@@ -57,6 +55,8 @@ export class ProductManagmentService {
         true
       );
 
+    // TODO: Validate passing sections of product
+
     // Validate that media files are an array of strings
     if (productInput.media_files && !checkIsStringsArray(productInput.media_files))
       throw new ApiError(
@@ -75,7 +75,8 @@ export class ProductManagmentService {
       category: productInput.category,
       subcategory: productInput.subcategory,
       branch_office: productInput.branchOffice,
-      variants: productInput.variants || []
+      variants: productInput.variants || [],
+      passage_sections: productInput.passageSections || [productInput.category]
     });
 
     return { product: deleteFields(productRecord) };
@@ -97,7 +98,6 @@ export class ProductManagmentService {
     getData = getData || '';
     const dataArray = getData.split(',');
     getData = dataArray.join(' ');
-    console.log(filter);
     return await this.productRepo.find(filter, getData);
   }
 
@@ -178,7 +178,8 @@ export class ProductManagmentService {
         category: updateProduct.category,
         subcategory: updateProduct.subcategory,
         branch_office: updateProduct.branchOffice,
-        variants: updateProduct.variants || []
+        variants: updateProduct.variants || [],
+        passage_sections: updateProduct.passageSections || [updateProduct.category]
       }
     );
 

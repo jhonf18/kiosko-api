@@ -25,6 +25,9 @@ export class ProductSchema {
   @prop({ type: () => String, required: true })
   subcategory: string;
 
+  @prop({ type: () => Array<String> })
+  passage_sections: Array<string>;
+
   @prop({ ref: () => BranchOfficeSchema, required: true })
   branch_office: Ref<BranchOfficeSchema, string>;
 

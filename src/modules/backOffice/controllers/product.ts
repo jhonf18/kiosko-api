@@ -50,7 +50,7 @@ export const getProductController = async (req: Request, res: Response, next: Ne
 };
 
 export const getProductsController = async (req: Request, res: Response, next: NextFunction) => {
-  let filter = req.query;
+  let filter = JSON.parse(JSON.stringify(req.query));
   delete filter.get;
 
   try {

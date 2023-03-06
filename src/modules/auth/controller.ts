@@ -45,10 +45,14 @@ routesAuth.post(
 // Signin users
 routesAuth.post('/signin', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let user = await authService.signin({
-      nickname: req.body.nickname,
-      password: req.body.password
-    });
+    let user = await authService.signin(
+      {
+        nickname: req.body.nickname,
+        password: req.body.password
+      },
+      undefined,
+      req.query.get as string
+    );
 
     response([user], 'OK', httpStatus.OK, res);
   } catch (error) {
@@ -76,7 +80,12 @@ routesAuth.post(
   '/verify-token',
   new MiddlewareAuthentication([...ALL_ROLES]).verifyToken,
   async (_req: Request, res: Response, _next: NextFunction) => {
-    return response([{ id_user: res.locals.userID }], 'OK', httpStatus.OK, res);
+    return response(
+      [{ id_user: res.locals.userID, id_branch_office: res.locals.branchOfficeID, user_role: res.locals.userRole }],
+      'OK',
+      httpStatus.OK,
+      res
+    );
   }
 );
 

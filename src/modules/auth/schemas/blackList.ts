@@ -11,7 +11,7 @@ class BlackListSchema {
   @prop({ default: Date.now(), type: () => Date })
   updated_at: Date;
 
-  @prop({ default: Date.now(), type: () => Date, expires: '1d' })
+  @prop({ default: Date.now(), type: () => Date, expires: '18h' })
   expires_at: Date;
 }
 

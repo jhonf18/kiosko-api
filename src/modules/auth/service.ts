@@ -61,13 +61,17 @@ export class AuthService {
     });
 
     // Generate token and remove fields that will no be sent to the client
-    const token = generateToken(id);
+    const token = generateToken({ id });
     const userToClient = deleteFields(userRecord, ['password']);
 
     return { token, user: userToClient };
   }
 
-  public async signin(userInput: loginUserInput, _admin?: boolean) {
+  public async signin(userInput: loginUserInput, _admin?: boolean, getData?: string) {
+    getData = getData || '';
+    const getDataArray = getData.split(',');
+    getData = getDataArray.join(' ');
+
     const fields: Array<string> = ['password', 'nickname'];
 
     const validatorSignup = await this.validatorUser.Signup(userInput, fields);
@@ -75,7 +79,11 @@ export class AuthService {
       throw new ApiError('CUSTOM', httpStatus.BAD_REQUEST, 'Error in the inputs', true, validatorSignup.errors);
     }
 
-    const userStore = await this.userService.findUserByNickname(userInput.nickname, undefined, true);
+    const userStore = await this.userService.findUserByNickname(
+      userInput.nickname,
+      `${getData} password branch_office.id id`,
+      true
+    );
     if (!userStore) {
       throw new ApiError('Not Found', httpStatus.NOT_FOUND, 'Email o contraseña incorrectos', true);
     }
@@ -89,7 +97,7 @@ export class AuthService {
       throw new ApiError('Unauthorized', httpStatus.UNAUTHORIZED, 'Email o contraseña incorrectos', true);
     }
 
-    const token = generateToken(userStore.id);
+    const token = generateToken({ id: userStore.id, idBranchOffice: userStore.branch_office.id });
     const userToClient = deleteFields(userStore, ['password']);
 
     return { token, user: userToClient };

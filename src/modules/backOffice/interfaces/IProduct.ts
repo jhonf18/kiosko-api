@@ -8,6 +8,7 @@ export interface IProduct {
   subcategory: string;
   branch_office: string;
   variants?: Array<string>;
+  passage_sections?: Array<string>;
 }
 
 export interface IUpdateProduct {
@@ -19,4 +20,5 @@ export interface IUpdateProduct {
   active?: boolean;
   branch_office: string;
   variants?: Array<string>;
+  passage_sections: Array<string>;
 }

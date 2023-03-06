@@ -90,8 +90,8 @@ export class ProductRepository {
 
     if (getData) {
       const parametrizationSearchParams = !getKeyID
-        ? parameterizeSearchWithParams(getData, 'password _id __v', '-_id')
-        : parameterizeSearchWithParams(getData, 'password _id __v');
+        ? parameterizeSearchWithParams(getData, '_id __v', '-_id')
+        : parameterizeSearchWithParams(getData, '_id __v');
       getData = parametrizationSearchParams.select;
 
       if (parametrizationSearchParams.populateOneLevel.length > 0) {
@@ -162,6 +162,45 @@ export class ProductRepository {
         'Ha ocurrido un error inesperado al actualizar el producto.',
         true,
         error.message
+      );
+    }
+  }
+
+  public async findProductsFromArrayIdsToIdkey(array: Array<string>) {
+    let _ids = [];
+
+    for await (const id of array) {
+      const product = await this.findOne({ id: id }, '_id', true);
+      if (!product) {
+        throw new ApiError(
+          'Bad Request',
+          httpStatus.BAD_REQUEST,
+          'No se ha encontrado el id del del producto al buscar.',
+          true,
+          'No se ha encontrado el _id del producto al buscar, path:/ProductRepository/findUsersFromArrayIdsToIdkey'
+        );
+      }
+      _ids.push(product?._id);
+    }
+
+    return _ids;
+  }
+
+  public async findProductsFromArrayWithMultipleIDS(idsArray: Array<string>, getData?: string) {
+    let arrayForSearch = [];
+    for (const id of idsArray) {
+      arrayForSearch.push({ id });
+    }
+
+    try {
+      return await this.productStore.find({ $or: arrayForSearch }, getData);
+    } catch (err: any) {
+      throw new ApiError(
+        'Bad Request',
+        httpStatus.BAD_REQUEST,
+        'Ha ocurrido un error al obtener los productos.',
+        true,
+        err.message
       );
     }
   }

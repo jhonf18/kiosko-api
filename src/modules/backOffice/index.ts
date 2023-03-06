@@ -19,9 +19,9 @@ routesBackOffice.use(
 );
 
 // Routes of managment of products
+// TODO: Add verification new MiddlewareAuthentication([ROLES.ADMIN, ROLES.LEADER]).verifyToken
 routesBackOffice.use(
   '/products-managment',
-  new MiddlewareAuthentication([ROLES.ADMIN, ROLES.LEADER]).verifyToken,
   routesProduct
 );
 

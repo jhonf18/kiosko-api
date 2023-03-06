@@ -11,6 +11,8 @@ import { UserModel } from './schemas/user';
 interface JwtPayloadApp extends jwt.JwtPayload {
   id: string;
   jti: string;
+  id_branch_office: string;
+  userRole: string;
 }
 export class MiddlewareAuthentication {
   private blackListRepo = new BlackListRepository();
@@ -56,6 +58,8 @@ export class MiddlewareAuthentication {
 
       res.locals.userID = tokenD.id;
       res.locals.tokenID = tokenD.jti;
+      res.locals.branchOfficeID = tokenD.id_branch_office;
+      res.locals.userRole = user.role;
       next();
     });
   };

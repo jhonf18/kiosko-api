@@ -8,21 +8,21 @@ import { httpLogger } from './../logger/httpLogger';
 const configApp = express();
 
 // config cors
-if (process.env.ENV === 'development') {
+//if (process.env.ENV === 'development') {
   configApp.use(
     cors({
       origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
       optionsSuccessStatus: 200
     })
   );
-} else {
-  configApp.use(
-    cors({
-      origin: ['https://fourp.space'],
-      optionsSuccessStatus: 200
-    })
-  );
-}
+//} else {
+//  configApp.use(
+//    cors({
+//      origin: ['https://fourp.space'],
+//      optionsSuccessStatus: 200
+//    })
+//  );
+//}
 
 // configuration logger with morgan
 configApp.use(httpLogger);
