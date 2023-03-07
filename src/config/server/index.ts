@@ -9,12 +9,12 @@ const configApp = express();
 
 // config cors
 //if (process.env.ENV === 'development') {
-  configApp.use(
-    cors({
-      origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
-      optionsSuccessStatus: 200
-    })
-  );
+configApp.use(
+  cors({
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'https://kiosko-realtime-production.up.railway.app'],
+    optionsSuccessStatus: 200
+  })
+);
 //} else {
 //  configApp.use(
 //    cors({
