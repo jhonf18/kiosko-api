@@ -7,16 +7,15 @@ import { httpStatus } from './httpStatusCodes';
 interface ResponseError {
   data: Array<any> | null;
   error: Object | null;
-  messages: Object | null;
+  message: Object | null;
 }
 
 export const errorHandlerApp = (err: ApiError, _req: Request, res: Response, _next: NextFunction) => {
   let response: ResponseError = {
     data: [],
     error: null,
-    messages: null
+    message: null
   };
-  console.log(err);
 
   if (err.isOperational) {
     res.status(err.statusCode);
@@ -25,13 +24,13 @@ export const errorHandlerApp = (err: ApiError, _req: Request, res: Response, _ne
       response.error = {
         type: err.description,
         code,
-        messages: err.cause
+        message: err.cause
       };
     } else {
       response.error = {
         type: err.name,
         code,
-        messages: err.description
+        message: err.description
       };
     }
   } else {
@@ -40,7 +39,7 @@ export const errorHandlerApp = (err: ApiError, _req: Request, res: Response, _ne
     response.error = {
       type: 'Unexpected error',
       code: 'INTERNAL_SERVER_ERROR',
-      messages: 'Ha ocurrido un error inesperado en el servidor.'
+      message: 'Ha ocurrido un error inesperado en el servidor.'
     };
   }
 

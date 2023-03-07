@@ -4,8 +4,8 @@
   "description": "this is the api for kiosko",
   "main": "index.js",
   "scripts": {
-    "tsc": "tsc",
-    "server": "node dist/app.js",
+    "build": "tsc",
+    "start": "node dist/app.js",
     "dev": "ts-node-dev src/app.ts"
   },
   "author": "Jhon Freddy Perez",
