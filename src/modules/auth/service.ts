@@ -81,7 +81,7 @@ export class AuthService {
 
     const userStore = await this.userService.findUserByNickname(
       userInput.nickname,
-      `${getData} password branch_office.id id`,
+      `${getData} password branch_office.id id role`,
       true
     );
     if (!userStore) {
@@ -97,7 +97,13 @@ export class AuthService {
       throw new ApiError('Unauthorized', httpStatus.UNAUTHORIZED, 'Email o contraseña incorrectos', true);
     }
 
-    const token = generateToken({ id: userStore.id, idBranchOffice: userStore.branch_office.id });
+    let token;
+    if (userStore.role !== 'ROLE_ADMIN') {
+      token = generateToken({ id: userStore.id, idBranchOffice: userStore.branch_office.id });
+    } else {
+      token = generateToken({ id: userStore.id });
+    }
+
     const userToClient = deleteFields(userStore, ['password']);
 
     return { token, user: userToClient };
