@@ -83,6 +83,38 @@ export class IngredientRepository {
     }
   }
 
+  public async findIngredientsFromArrayWithMultiplesIDS(idsArray: Array<string>, getData?: string) {
+    let arrayForSearch = [];
+    for (const id of idsArray) {
+      arrayForSearch.push({ id });
+    }
+
+    let ingredientsStore = [];
+
+    try {
+      ingredientsStore = await this.ingredientStore.find({ $or: arrayForSearch }, getData);
+    } catch (err: any) {
+      throw new ApiError(
+        'Bad Request',
+        httpStatus.BAD_REQUEST,
+        'Ha ocurrido un error al obtener los ingredientes.',
+        true,
+        err.message
+      );
+    }
+
+    if (ingredientsStore.length !== idsArray.length) {
+      throw new ApiError(
+        'Bad Request',
+        httpStatus.BAD_REQUEST,
+        'Alguno de los ingredientes no se encuentran en nuestra base de datos.',
+        true
+      );
+    }
+
+    return ingredientsStore;
+  }
+
   public async findIngredientFromArrayIdsToIdkey(array: Array<string>) {
     let _ids = [];
 

@@ -58,7 +58,7 @@ export class ProductManagmentService {
     // TODO: Validate passing sections of product
 
     // Validate that media files are an array of strings
-    if (productInput.media_files && !checkIsStringsArray(productInput.media_files))
+    if (productInput.mediaFiles && !checkIsStringsArray(productInput.mediaFiles))
       throw new ApiError(
         'Bad Request',
         httpStatus.BAD_REQUEST,
@@ -69,13 +69,13 @@ export class ProductManagmentService {
     const productRecord = await this.productRepo.save({
       id: uuidv4(),
       name: productInput.name,
-      media_files: productInput.media_files || [],
+      media_files: productInput.mediaFiles || [],
       price: productInput.price,
       active: productInput.active,
       category: productInput.category,
       subcategory: productInput.subcategory,
       branch_office: productInput.branchOffice,
-      variants: productInput.variants || [],
+      selected_ingredients: productInput.selectedIngredients || [],
       passage_sections: productInput.passageSections || [productInput.category]
     });
 
@@ -161,7 +161,7 @@ export class ProductManagmentService {
       );
 
     // Validate that media files are an array of strings
-    if (updateProduct.media_files && !checkIsStringsArray(updateProduct.media_files))
+    if (updateProduct.mediaFiles && !checkIsStringsArray(updateProduct.mediaFiles))
       throw new ApiError(
         'Bad Request',
         httpStatus.BAD_REQUEST,
@@ -173,12 +173,12 @@ export class ProductManagmentService {
       { id: productStore.id },
       {
         name: updateProduct.name,
-        media_files: updateProduct.media_files || [],
+        media_files: updateProduct.mediaFiles || [],
         price: updateProduct.price,
         category: updateProduct.category,
         subcategory: updateProduct.subcategory,
         branch_office: updateProduct.branchOffice,
-        variants: updateProduct.variants || [],
+        selected_ingredients: updateProduct.selectedIngredients || [],
         passage_sections: updateProduct.passageSections || [updateProduct.category]
       }
     );

@@ -1,11 +1,16 @@
-export interface ICreateOrder {
-  products: Array<{ product_id: string; variant?: string }>;
-  comments?: Array<{ id_product: string; comment: string }>;
+export interface ICreateOrderInput {
+  selectedProducts: Array<ISelectedProductInput>;
+  comments?: string;
   totalPrice: number;
   isOpen?: boolean;
   branchOffice: string;
-  customProducts: Array<ICustomProductInput>;
   waiter: string;
+}
+
+export interface ISelectedProductInput {
+  product: string;
+  ids_selected_ingredients?: Array<string>;
+  comments?: string;
 }
 
 export interface ICustomProductInput {

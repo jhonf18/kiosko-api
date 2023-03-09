@@ -7,8 +7,13 @@ export interface IProduct {
   category: string;
   subcategory: string;
   branch_office: string;
-  variants?: Array<string>;
-  passage_sections?: Array<string>;
+  selected_ingredients: Array<ISelectedIngredients>;
+  passage_sections: Array<string>;
+}
+
+interface ISelectedIngredients {
+  ingredient: string;
+  quantity: string;
 }
 
 export interface IUpdateProduct {
@@ -19,6 +24,6 @@ export interface IUpdateProduct {
   subcategory: string;
   active?: boolean;
   branch_office: string;
-  variants?: Array<string>;
   passage_sections: Array<string>;
+  selected_ingredients: Array<ISelectedIngredients>;
 }

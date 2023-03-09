@@ -1,6 +1,6 @@
 import { getModelForClass, modelOptions, prop, Ref } from '@typegoose/typegoose';
 import { BranchOfficeSchema } from './branchOffice';
-import { DishVariantSchema } from './dishVariant';
+import { IngredientSchema } from './ingredients';
 
 @modelOptions({ options: { customName: 'product' } })
 export class ProductSchema {
@@ -31,8 +31,19 @@ export class ProductSchema {
   @prop({ ref: () => BranchOfficeSchema, required: true })
   branch_office: Ref<BranchOfficeSchema, string>;
 
-  @prop({ ref: () => Array<DishVariantSchema>, type: () => Array<String>, required: false, default: [] })
-  variants?: Array<Ref<DishVariantSchema, string>>;
+  @prop({
+    ref: () =>
+      Array<{
+        ingredient: IngredientSchema;
+        quantity?: number;
+      }>,
+    type: () => Array<String>,
+    required: false
+  })
+  selected_ingredients?: Array<{
+    ingredient: Ref<IngredientSchema, string>;
+    quatity?: number;
+  }>;
 
   @prop({ default: Date.now(), type: () => Date })
   created_at: Date;

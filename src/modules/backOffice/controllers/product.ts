@@ -97,13 +97,13 @@ export const createProductController = async (req: Request, res: Response, next:
   try {
     let data = await productManagmentService.createProduct({
       name: req.body.name,
-      media_files: req.body.media_files,
+      mediaFiles: req.body.media_files,
+      selectedIngredients: req.body.selected_ingredients,
       price: req.body.price,
       active: req.body.active,
       category: req.body.category,
       subcategory: req.body.subcategory,
-      branchOffice: req.body.branchOffice,
-      variants: req.body.variants
+      branchOffice: req.body.branch_office
     });
 
     response([data], 'OK', httpStatus.CREATED, res);
@@ -144,13 +144,13 @@ export const updateProductController = async (req: Request, res: Response, next:
   try {
     let data = await productManagmentService.updateProduct(req.params.idProduct, {
       name: req.body.name,
-      media_files: req.body.media_files,
+      mediaFiles: req.body.media_files,
       price: req.body.price,
       active: req.body.active,
       category: req.body.category,
       subcategory: req.body.subcategory,
       branchOffice: req.body.branchOffice,
-      variants: req.body.variants
+      selectedIngredients: req.body.selected_ingredients
     });
 
     response([data], 'OK', httpStatus.CREATED, res);

@@ -46,9 +46,16 @@ export class MiddlewareAuthentication {
       if (blackList) return next(new ApiError('Token invalid', httpStatus.UNAUTHORIZED, 'El token no es válido', true));
 
       // Find user by id
-      const user = (await this.userRepo.getUser({ nameField: 'id', valueField: tokenD.id }, 'role')) || { role: '' };
-
-      // const userRole = user.role;
+      const user = await this.userRepo.getUser({ nameField: 'id', valueField: tokenD.id }, 'role');
+      if (!user)
+        return next(
+          new ApiError(
+            'Not Found User',
+            httpStatus.NOT_FOUND,
+            'No se ha encontrado el usuario con el token especificado.',
+            true
+          )
+        );
 
       if (user && !this.findRoleInRoles(user.role)) {
         return next(
@@ -65,13 +72,6 @@ export class MiddlewareAuthentication {
   };
 
   private findRoleInRoles = (role: string): boolean => {
-    let result = false;
-    for (let i = 0; i < this.rolesAccepted.length; i++) {
-      if (role == this.rolesAccepted[i]) {
-        result = true;
-        break;
-      }
-    }
-    return result;
+    return this.rolesAccepted.includes(role);
   };
 }

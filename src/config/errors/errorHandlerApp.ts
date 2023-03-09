@@ -17,6 +17,8 @@ export const errorHandlerApp = (err: ApiError, _req: Request, res: Response, _ne
     message: null
   };
 
+  console.log(err);
+
   if (err.isOperational) {
     res.status(err.statusCode);
     const code = getKeyByValue(httpStatus, err.statusCode);

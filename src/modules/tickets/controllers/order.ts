@@ -6,11 +6,11 @@ import { orderService } from './../dependencyInjectorTickets';
 export const createOrderController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let data = await orderService.createOrder({
-      products: req.body.products,
+      selectedProducts: req.body.selected_products,
       totalPrice: req.body.total_price,
       isOpen: req.body.is_open,
+      comments: req.body.comments,
       branchOffice: res.locals.branchOfficeID,
-      customProducts: req.body.custom_products,
       waiter: res.locals.userID
     });
 

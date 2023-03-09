@@ -1,23 +1,23 @@
 export interface IOrder {
   id: string;
-  products?: Array<{ product_id: string; variant?: string; comments?: string }>;
-  custom_products?: Array<ICustomProduct>;
-  comments?: Array<{ id_product: string; comment: string }>;
+  selected_products: Array<ISelectedProduct>;
+  comments?: string;
   total_price: number;
   is_open?: boolean;
   branch_office: string;
   waiter: string;
 }
 
-export interface ICustomProduct {
-  name: string;
-  variant: any;
-  price: number;
-  ingredients?: any[];
+export interface ISelectedProduct {
+  product: string;
+  ids_selected_ingredients?: Array<string>;
   comments?: string;
-  sections: string[];
+  passage_sections?: Array<string>;
 }
 
 export interface IUpdateOrder {
-  is_open: boolean;
+  total_price?: number;
+  selected_products?: Array<ISelectedProduct>;
+  added_products?: Array<ISelectedProduct>;
+  is_open?: boolean;
 }

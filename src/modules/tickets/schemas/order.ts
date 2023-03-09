@@ -1,5 +1,4 @@
-import { getModelForClass, modelOptions, prop, Ref, Severity } from '@typegoose/typegoose';
-import mongoose from 'mongoose';
+import { getModelForClass, modelOptions, prop, Ref } from '@typegoose/typegoose';
 import { ProductSchema } from '../../backOffice/schemas/product';
 import { UserSchema } from './../../../shared/schemas/user';
 import { BranchOfficeSchema } from './../../backOffice/schemas/branchOffice';
@@ -13,13 +12,18 @@ export class OrderSchema {
     ref: () =>
       Array<{
         product: ProductSchema;
-        variant?: String;
+        ids_selected_ingredients?: Array<String>;
+        comments: string;
       }>,
     type: () => Array<String>,
     required: false,
     default: []
   })
-  products: Array<{ product: Ref<ProductSchema, string>; variant?: String }>;
+  selected_products: Array<{
+    product: Ref<ProductSchema, string>;
+    ids_selected_ingredients?: Array<string>;
+    comments: string;
+  }>;
 
   @prop({ type: () => String })
   comments?: string;
@@ -29,9 +33,6 @@ export class OrderSchema {
 
   @prop({ type: () => Boolean, default: true })
   is_open: boolean;
-
-  @prop({ allowMixed: Severity.ALLOW, type: () => mongoose.Schema.Types.Mixed, required: false })
-  custom_products?: any;
 
   @prop({ ref: () => UserSchema, required: true })
   waiter: Ref<UserSchema>;

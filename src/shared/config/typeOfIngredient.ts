@@ -1,1 +1,1 @@
-export const typesOfIngredients = ['COSEPAN', 'PROTEÍNA'];
+export const typesOfIngredients = ['COSEPAN', 'PROTEÍNA', 'OTROS'];

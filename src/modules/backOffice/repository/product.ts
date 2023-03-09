@@ -1,31 +1,45 @@
 import { ApiError } from './../../../config/errors/ApiError';
 import { httpStatus } from './../../../config/errors/httpStatusCodes';
+import { getObjectFromArray } from './../../../utilities/index';
 import { parameterizeSearchWithParams } from './../../utils/parameterizeSearchWithParams';
 import { IProduct, IUpdateProduct } from './../interfaces/IProduct';
 import { BranchOfficeModel } from './../schemas/branchOffice';
 import { DishVariantModel } from './../schemas/dishVariant';
 import { ProductModel } from './../schemas/product';
 import { BranchOfficeRepository } from './branchOffice';
-import { DishVariantRepository } from './dishVariant';
+import { IngredientRepository } from './ingredient';
+
+/* It's an interface that defines the structure of the selected ingredients array. */
+interface ISelectedIngredient {
+  ingredient: string;
+  quantity: string;
+}
 
 export class ProductRepository {
   constructor(
     private readonly productStore: typeof ProductModel,
-    private readonly dishVariantRepo: DishVariantRepository,
+    private readonly ingredientRepo: IngredientRepository,
     private readonly branchOfficeRepo: BranchOfficeRepository
   ) {}
 
+  /**
+   * We are saving a product, but before saving it, we need to find the branch office and the selected
+   * ingredients for add _ids
+   * @param {IProduct} product - IProduct
+   * @returns The productStore.save() method returns a promise.
+   */
   public async save(product: IProduct) {
     // Search Branch Office from Id and get _id to save them in the database with product store
+    const branchOfficeStorePromise = this.branchOfficeRepo.findOne({ id: product.branch_office }, '_id', true);
+    const selectedIngredientsPromise = this.prepareIngredientsToSave(product.selected_ingredients);
 
-    const branchOfficeStore = await this.branchOfficeRepo.findOne({ id: product.branch_office }, '_id', true);
+    const [branchOfficeStore, selectedIngredients] = await Promise.all([
+      branchOfficeStorePromise,
+      selectedIngredientsPromise
+    ]);
+
     product.branch_office = branchOfficeStore!._id;
-
-    // Search the variants by Id and then get the _ids to save them in the database with product
-    if (product.variants) {
-      const variants = await this.dishVariantRepo.findVariantFromArrayIdsToIdkey(product.variants);
-      product.variants = variants;
-    }
+    product.selected_ingredients = selectedIngredients;
 
     if (typeof product.active === 'undefined') product.active = true;
 
@@ -45,6 +59,13 @@ export class ProductRepository {
     }
   }
 
+  /**
+   * It's a function that returns a promise that resolves to a product document from the database
+   * @param {Object} [conditions] - Object with the conditions to find the product.
+   * @param {string} [getData] - string
+   * @param {boolean} [getKeyID] - boolean
+   * @returns The product that matches the conditions.
+   */
   public async findOne(conditions?: Object, getData?: string, getKeyID?: boolean) {
     conditions = conditions || {};
     let populate = [];
@@ -84,6 +105,13 @@ export class ProductRepository {
     }
   }
 
+  /**
+   * It returns a list of products that match the conditions passed as a parameter
+   * @param {Object | null} [conditions] - Object | null
+   * @param {string} [getData] - string
+   * @param {boolean} [getKeyID] - boolean
+   * @returns The result of the query.
+   */
   public async find(conditions?: Object | null, getData?: string, getKeyID?: boolean) {
     conditions = conditions || {};
     let populate = [];
@@ -123,6 +151,11 @@ export class ProductRepository {
     }
   }
 
+  /**
+   * It deletes a product from the database
+   * @param {Object} conditions - Object
+   * @returns The number of deleted documents.
+   */
   public async delete(conditions: Object) {
     try {
       const result = await this.productStore.deleteOne(conditions);
@@ -139,17 +172,23 @@ export class ProductRepository {
     }
   }
 
+  /**
+   * It updates a product in the database
+   * @param {Object} conditions - Object
+   * @param {IUpdateProduct} product - IUpdateProduct
+   * @returns The updated product.
+   */
   public async update(conditions: Object, product: IUpdateProduct) {
-    // Add BranchOffice _id to collection
-    const branchOfficeStore = await this.branchOfficeRepo.findOne({ id: product.branch_office }, '_id');
-    product.branch_office = branchOfficeStore!._id;
+    const branchOfficeStorePromise = this.branchOfficeRepo.findOne({ id: product.branch_office }, '_id', true);
+    const selectedIngredientsPromise = this.prepareIngredientsToSave(product.selected_ingredients);
 
-    // If there variants for save in DB
-    if (product.variants) {
-      // Get _ids of the variants passing ID
-      const variants = await this.dishVariantRepo.findVariantFromArrayIdsToIdkey(product.variants);
-      product.variants = variants;
-    }
+    const [branchOfficeStore, selectedIngredients] = await Promise.all([
+      branchOfficeStorePromise,
+      selectedIngredientsPromise
+    ]);
+
+    product.branch_office = branchOfficeStore!._id;
+    product.selected_ingredients = selectedIngredients;
 
     try {
       return await this.productStore.findOneAndUpdate(conditions, product, {
@@ -203,5 +242,31 @@ export class ProductRepository {
         err.message
       );
     }
+  }
+
+  /**
+   * It takes an array of selected ingredients, finds the ingredients in the database, and returns an
+   * array of selected ingredients with the ingredient object replaced by the ingredient's _id
+   * @param selectedIngredients - Array<ISelectedIngredient>
+   * @returns An array of objects with the ingredient id and quantity.
+   */
+  private async prepareIngredientsToSave(selectedIngredients: Array<ISelectedIngredient>) {
+    const ingredientsID = selectedIngredients.map(selected => selected.ingredient);
+    const ingredients = await this.ingredientRepo.findIngredientsFromArrayWithMultiplesIDS(ingredientsID, '_id id');
+
+    let selectedIngredientsReadyToSave = [];
+    for (const ingredient of ingredients) {
+      const ingredientWithCommentsAndQuantity = getObjectFromArray(
+        selectedIngredients,
+        'ingredient',
+        ingredient.id
+      ) as ISelectedIngredient;
+      selectedIngredientsReadyToSave.push({
+        ingredient: ingredient._id,
+        quantity: ingredientWithCommentsAndQuantity.quantity
+      });
+    }
+
+    return selectedIngredientsReadyToSave;
   }
 }
