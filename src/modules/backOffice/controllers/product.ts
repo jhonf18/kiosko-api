@@ -102,6 +102,7 @@ export const createProductController = async (req: Request, res: Response, next:
       price: req.body.price,
       active: req.body.active,
       category: req.body.category,
+      passageSections: req.body.passage_sections,
       subcategory: req.body.subcategory,
       branchOffice: req.body.branch_office
     });
@@ -150,10 +151,11 @@ export const updateProductController = async (req: Request, res: Response, next:
       category: req.body.category,
       subcategory: req.body.subcategory,
       branchOffice: req.body.branchOffice,
+      passageSections: req.body.passage_sections,
       selectedIngredients: req.body.selected_ingredients
     });
 
-    response([data], 'OK', httpStatus.CREATED, res);
+    response([data], 'OK', httpStatus.OK, res);
   } catch (error) {
     next(error);
   }

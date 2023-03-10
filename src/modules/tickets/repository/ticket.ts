@@ -1,3 +1,4 @@
+import { UserModel } from '../../../shared/schemas/user';
 import { ApiError } from './../../../config/errors/ApiError';
 import { httpStatus } from './../../../config/errors/httpStatusCodes';
 import { ProductRepository } from './../../backOffice/repository/product';
@@ -75,6 +76,7 @@ export class TicketRepository {
   public async find(conditions: any | null, getData?: string, getKeyID?: boolean) {
     conditions = conditions || {};
     let populate = [];
+    let options: { sort: { [key: string]: number } } = { sort: {} };
 
     if (getData) {
       const parametrizationSearchParams = !getKeyID
@@ -88,24 +90,45 @@ export class TicketRepository {
             populate.model = ProductModel;
 
             const selectPopulateArray = populate.select.split(' ');
-            if (selectPopulateArray.some((el: string) => el === 'ingredients')) {
-              populate.select += ' selected_ingredients.quantity';
-              populate.populate = [
-                {
-                  path: 'selected_ingredients.ingredient',
-                  select: 'id name type -_id',
-                  model: IngredientModel
-                }
-              ];
+            if (selectPopulateArray.includes('ingredients')) {
+              getData += ' ingredients';
+              populate.select += ' selected_ingredients selected_ingredients.quantity selected_ingredients.ingredient';
+              populate.populate = {
+                path: 'selected_ingredients.ingredient',
+                select: 'id name type -_id',
+                model: IngredientModel
+              };
             }
           } else if (populate.path === 'order') {
             populate.model = OrderModel;
+          } else if (populate.path === 'waiter') {
+            let index = -1;
+            const orderPopulate = parametrizationSearchParams.populateOneLevel.find((popu, indexFinded) => {
+              index = indexFinded;
+              return popu.path === 'order';
+            });
+
+            populate.path = 'order';
+            populate.model = OrderModel;
+            const fieldsWaiterToPopulate = populate.select;
+
+            if (index >= 0) {
+              populate.select = orderPopulate.select;
+              parametrizationSearchParams.populateOneLevel.splice(index, 1);
+            }
+
+            populate.populate = {
+              path: 'waiter',
+              model: UserModel,
+              select: fieldsWaiterToPopulate + ' -_id'
+            };
           }
 
           populate.select += ' -_id';
         }
 
         populate = parametrizationSearchParams.populateOneLevel;
+        console.log('🚀 ~ file: ticket.ts:124 ~ TicketRepository ~ find ~ populate:', populate);
       }
     } else {
       getData = '';
@@ -127,8 +150,12 @@ export class TicketRepository {
       conditions.product = productStore._id;
     }
 
+    if (conditions.hasOwnProperty('sort')) {
+      options.sort[conditions.sort.field] = conditions.sort.type === 'asc' ? 1 : -1;
+    }
+
     try {
-      return await this.ticketStore.find(conditions, getData).populate(populate);
+      return await this.ticketStore.find(conditions, getData, options).populate(populate);
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',

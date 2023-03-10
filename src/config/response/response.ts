@@ -1,6 +1,6 @@
 import { Response } from 'express';
 
-export const response = (data: Array<any> | null, message: string, status: number, res: Response) => {
+export const response = (data: Array<any> | Object | null, message: string, status: number, res: Response) => {
   let response = {
     data: data,
     error: null,

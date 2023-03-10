@@ -20,6 +20,21 @@ const authService: AuthService = container.resolve('authService');
 
 const routesAuth = express();
 
+routesAuth.get(
+  '/user',
+  new MiddlewareAuthentication([...ALL_ROLES]).verifyToken,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      let { user } = await authService.getUser(res.locals.userID, req.query.get as string);
+
+      user.branch_office = res.locals.branchOfficeID;
+      response({ user }, 'OK', httpStatus.OK, res);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 // Signup users
 routesAuth.post(
   '/signup',
@@ -45,7 +60,7 @@ routesAuth.post(
 // Signin users
 routesAuth.post('/signin', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let user = await authService.signin(
+    const { token } = await authService.signin(
       {
         nickname: req.body.nickname,
         password: req.body.password
@@ -54,7 +69,9 @@ routesAuth.post('/signin', async (req: Request, res: Response, next: NextFunctio
       req.query.get as string
     );
 
-    response([user], 'OK', httpStatus.OK, res);
+    response({ token }, 'OK', httpStatus.OK, res);
+    // res.status(200);
+    // res.send({ token });
   } catch (error) {
     next(error);
   }

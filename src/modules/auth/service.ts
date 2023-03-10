@@ -24,6 +24,12 @@ export class AuthService {
     private blackListRepo: BlackListRepository
   ) {}
 
+  /**
+   * It validates the input, creates a user ID, creates a nickname, hashes the password, saves the user
+   * in the database, generates a token and returns the token and the user
+   * @param {creatUserInput} userInput - creatUserInput
+   * @returns The token and the user
+   */
   public async signup(userInput: creatUserInput) {
     // Validate fields
     const fields: Array<string> = ['name', 'email', 'password_1', 'password_2', 'role', 'branchOffice'];
@@ -67,6 +73,14 @@ export class AuthService {
     return { token, user: userToClient };
   }
 
+  /**
+   * It takes in a userInput object, an optional _admin boolean, and an optional getData string, and
+   * returns a Promise that resolves to an object with a token property
+   * @param {loginUserInput} userInput - loginUserInput
+   * @param {boolean} [_admin] - boolean
+   * @param {string} [getData] - This is the data that you want to get from the user.
+   * @returns The token
+   */
   public async signin(userInput: loginUserInput, _admin?: boolean, getData?: string) {
     getData = getData || '';
     const getDataArray = getData.split(',');
@@ -85,7 +99,7 @@ export class AuthService {
       true
     );
     if (!userStore) {
-      throw new ApiError('Not Found', httpStatus.NOT_FOUND, 'Email o contraseña incorrectos', true);
+      throw new ApiError('Unauthorized', httpStatus.UNAUTHORIZED, 'Email o contraseña incorrectos', true);
     }
 
     // if (!admin && userStore.role === 'ROLE_ADMIN') {
@@ -98,18 +112,39 @@ export class AuthService {
     }
 
     let token;
+
     if (userStore.role !== 'ROLE_ADMIN') {
       token = generateToken({ id: userStore.id, idBranchOffice: userStore.branch_office.id });
     } else {
       token = generateToken({ id: userStore.id });
     }
 
-    const userToClient = deleteFields(userStore, ['password']);
-
-    return { token, user: userToClient };
+    return { token };
   }
 
+  /**
+   * It saves the token to the database
+   * @param {string} idToken - The idToken that was returned from the signin method.
+   */
   public async signout(idToken: string) {
     await this.blackListRepo.saveToken(idToken);
+  }
+
+  public async getUser(userID: string, getData?: string) {
+    if (!userID) throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'No se puede leer el ID del token.', true);
+
+    const userStore = await this.userService.findUserById(userID, getData);
+
+    if (!userStore)
+      throw new ApiError(
+        'Not Found User',
+        httpStatus.NOT_FOUND,
+        'No se ha encontrado el usuario con el ID especificado.',
+        true
+      );
+
+    const userToClient = deleteFields(userStore, ['password']);
+
+    return { user: userToClient };
   }
 }

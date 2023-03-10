@@ -50,7 +50,48 @@ export const changeOrderStatusController = async (req: Request, res: Response, n
   try {
     let data = await orderService.changeStatusOfOrder(req.params.idOrder, req.body.is_open);
 
-    response([data], 'OK', httpStatus.CREATED, res);
+    response([data], 'OK', httpStatus.OK, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const addProductsToOrderController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    let data = await orderService.addProductsToOrder(req.params.idOrder, req.body.selected_products);
+
+    response([data], 'OK', httpStatus.OK, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteProductOfOrderController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    let data = await orderService.deleteProductToOrder(req.params.idOrder, {
+      productID: req.body.product_id,
+      comments: req.body.product_comments
+    });
+
+    response([data], 'OK', httpStatus.OK, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateCommentOrIngredientsOfAProductOfOrderController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    let data = await orderService.updateCommentOrIngredientsToProductOfOrder(req.params.idOrder, {
+      productID: req.body.product_id,
+      comments: req.body.product_comments,
+      ingredients: req.body.product_ingredients
+    });
+
+    response([data], 'OK', httpStatus.OK, res);
   } catch (error) {
     next(error);
   }

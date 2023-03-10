@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { UserService } from './../../../shared/services/user';
 import { IngredientModel } from './../../backOffice/schemas/ingredients';
 
+import { UserModel } from '../../../shared/schemas/user';
 import { ApiError } from './../../../config/errors/ApiError';
 import { httpStatus } from './../../../config/errors/httpStatusCodes';
 import { IOrder, ISelectedProduct, IUpdateOrder } from './../../backOffice/interfaces/IOrder';
@@ -42,7 +43,9 @@ export class OrderRepository {
     // For save in DB the _id of product for after can populate products
     let tickets: any[] = [];
     if (order.selected_products.length > 0) {
-      const selectedProductsToSave = await this.preparateProductsToSave(order.selected_products);
+      const selectedProductsToSave = (await this.preparateProductsToSave(
+        order.selected_products
+      )) as ISelectedProduct[];
       order.selected_products = selectedProductsToSave;
       tickets = this.preparateTicketsForSave(order.selected_products, orderStore._id, branchOfficeStore?._id);
     }
@@ -73,6 +76,7 @@ export class OrderRepository {
   public async find(conditions: Object | null | any, getData?: string, getKeyID?: boolean) {
     conditions = conditions || {};
     let populate = [];
+    let options: { sort: { [key: string]: number } } = { sort: {} };
 
     if (getData) {
       const parametrizationSearchParams = !getKeyID
@@ -98,6 +102,8 @@ export class OrderRepository {
             }
           } else if (populate.path === 'branch_office') {
             populate.model = BranchOfficeModel;
+          } else if (populate.path === 'waiter') {
+            populate.model = UserModel;
           }
 
           if (!getKeyID) populate.select += ' -_id';
@@ -119,8 +125,26 @@ export class OrderRepository {
       }
     }
 
+    if (conditions.hasOwnProperty('sort')) {
+      options.sort[conditions.sort.field] = conditions.sort.type === 'asc' ? 1 : -1;
+    }
+
     try {
-      return await this.orderStore.find(conditions, getData).populate(populate);
+      return await this.orderStore.find(conditions, getData, options).populate(populate);
+    } catch (error: any) {
+      throw new ApiError(
+        'Internal Error',
+        httpStatus.INTERNAL_SERVER_ERROR,
+        'Ha ocurrido un error inesperado al obtener las ordenes.',
+        true,
+        error.message
+      );
+    }
+  }
+
+  public async findOne(conditions: Object | any, getData?: string) {
+    try {
+      return await this.orderStore.findOne(conditions, getData);
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',
@@ -138,28 +162,41 @@ export class OrderRepository {
    * @param {IUpdateOrder} orderUpdate - IUpdateOrder
    * @returns The updated order.
    */
-  public async update(conditions: Object, orderUpdate: IUpdateOrder) {
+  public async update(conditions: Object, orderUpdate: IUpdateOrder, orderStoreDB?: any) {
     conditions = conditions || {};
     let orderUpdateForDB = orderUpdate as any;
 
+    let tickets: any[] = [];
+
     // Add products to order
     if (orderUpdate.added_products && orderUpdate.added_products.length > 0) {
-      const addedProductsForSave = await this.preparateProductsToSave(orderUpdate.added_products);
+      const addedProductsForSave = (await this.preparateProductsToSave(orderUpdate.added_products, true)) as {
+        selectedProductsToSave: Array<ISelectedProduct>;
+        totalPrice: number;
+      };
       // Create tickets
       //
       orderUpdateForDB.$push = {
-        selected_products: { $each: addedProductsForSave }
+        selected_products: { $each: addedProductsForSave.selectedProductsToSave }
       };
+
+      tickets = this.preparateTicketsForSave(
+        addedProductsForSave.selectedProductsToSave,
+        orderStoreDB._id,
+        orderStoreDB.branch_office
+      );
+      orderUpdateForDB.total_price = orderStoreDB.total_price + addedProductsForSave.totalPrice;
     }
 
-    // Eliminar productos de la orden, si no se ha comenzado hacer el pedido se puede borrar,
-    // Si el producto tiene creado un ticket, entonces es necesario el id del ticket para borrarlo
-    // Si en dado caso ya se comenzó el único que puede borrarlo es el lider de la sección
-    // Actualizar comentarios de productos, siempre y cuando no se haya empezado a realizar el pedido
-    // Luego enviar los comentarios al ticket
+    const ticketsRecord = await this.ticketRepo.saveMany(tickets);
 
     try {
-      return await this.orderStore.findOneAndUpdate(conditions, orderUpdateForDB, { new: true });
+      if (orderUpdate.added_products && orderUpdate.added_products.length > 0) {
+        const order = await this.orderStore.findOneAndUpdate(conditions, orderUpdateForDB, { new: true });
+        return { order, tickets: ticketsRecord };
+      } else {
+        return await this.orderStore.findOneAndUpdate(conditions, orderUpdateForDB, { new: true });
+      }
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',
@@ -220,29 +257,41 @@ export class OrderRepository {
    * @param products - Array<ISelectedProduct>
    * @returns a Promise<Array<ISelectedProduct>>
    */
-  private async preparateProductsToSave(products: Array<ISelectedProduct>): Promise<Array<ISelectedProduct>> {
+  private async preparateProductsToSave(
+    products: Array<ISelectedProduct>,
+    getPriceProduct?: boolean
+  ): Promise<Array<ISelectedProduct> | { selectedProductsToSave: Array<ISelectedProduct>; totalPrice: number }> {
     const productsIDS = products.map(selected => selected.product);
-    const productsStore = await this.productRepo.findProductsFromArrayWithMultipleIDS(
-      productsIDS,
-      'id _id passage_sections'
-    );
+
+    const productsStore = !getPriceProduct
+      ? await this.productRepo.findProductsFromArrayWithMultipleIDS(productsIDS, 'id _id passage_sections')
+      : await this.productRepo.findProductsFromArrayWithMultipleIDS(productsIDS, 'id _id passage_sections price');
 
     // TODO: Verificar que los Ids de los ingredientes existan
+    let totalPrice = 0;
 
     const selectedProductsToSave = products.map(selected => {
       const productStore = productsStore.find(el => el.id === selected.product) as {
         id: string;
         _id: any;
         passage_sections: Array<string>;
+        price?: number;
       };
       let result = selected;
       result.product = productStore?._id;
       result.comments = `${uuidv4()}::${!selected.comments ? '' : selected.comments}`;
       result.passage_sections = productStore.passage_sections;
+
+      if (getPriceProduct && productStore.price) totalPrice += productStore.price;
+
       return result;
     });
 
-    return selectedProductsToSave;
+    if (getPriceProduct) {
+      return { selectedProductsToSave, totalPrice };
+    } else {
+      return selectedProductsToSave;
+    }
   }
 
   /**

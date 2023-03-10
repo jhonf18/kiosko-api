@@ -1,9 +1,12 @@
 import { ROLES } from './../../../shared/config/roles';
 import {
+  addProductsToOrderController,
   changeOrderStatusController,
   createOrderController,
   deleteOrderController,
-  getOrdersController
+  deleteProductOfOrderController,
+  getOrdersController,
+  updateCommentOrIngredientsOfAProductOfOrderController
 } from './../controllers/order';
 // Controlador de rutas para el cocinero del horno
 // Controlador de rutas para el cocinero de cocina
@@ -23,6 +26,24 @@ routesOrder.put(
   changeOrderStatusController
 );
 
+routesOrder.put(
+  '/change-status-order/:idOrder',
+  new MiddlewareAuthentication([ROLES.LEADER]).verifyToken,
+  changeOrderStatusController
+);
+
+routesOrder.put(
+  '/add-products-to-order/:idOrder',
+  new MiddlewareAuthentication([ROLES.WAITER]).verifyToken,
+  addProductsToOrderController
+);
+
+routesOrder.put(
+  '/update-comments-or-ingredients-of-product/:idOrder',
+  new MiddlewareAuthentication([ROLES.WAITER]).verifyToken,
+  updateCommentOrIngredientsOfAProductOfOrderController
+);
+
 // Get all orders (Obtener todas las ordenes del día)
 routesOrder.get('/orders', new MiddlewareAuthentication([ROLES.LEADER, ROLES.ADMIN]).verifyToken, getOrdersController);
 
@@ -34,6 +55,12 @@ routesOrder.delete(
   '/delete-order/:idOrder',
   new MiddlewareAuthentication([ROLES.LEADER]).verifyToken,
   deleteOrderController
+);
+
+routesOrder.delete(
+  '/delete-product-of-order/:idOrder',
+  new MiddlewareAuthentication([ROLES.WAITER]).verifyToken,
+  deleteProductOfOrderController
 );
 
 export default routesOrder;

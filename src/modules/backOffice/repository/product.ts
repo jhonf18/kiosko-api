@@ -30,16 +30,20 @@ export class ProductRepository {
    */
   public async save(product: IProduct) {
     // Search Branch Office from Id and get _id to save them in the database with product store
-    const branchOfficeStorePromise = this.branchOfficeRepo.findOne({ id: product.branch_office }, '_id', true);
-    const selectedIngredientsPromise = this.prepareIngredientsToSave(product.selected_ingredients);
+    if (product.selected_ingredients && product.selected_ingredients.length > 0) {
+      const branchOfficeStorePromise = this.branchOfficeRepo.findOne({ id: product.branch_office }, '_id', true);
+      const selectedIngredientsPromise = this.prepareIngredientsToSave(product.selected_ingredients);
 
-    const [branchOfficeStore, selectedIngredients] = await Promise.all([
-      branchOfficeStorePromise,
-      selectedIngredientsPromise
-    ]);
-
-    product.branch_office = branchOfficeStore!._id;
-    product.selected_ingredients = selectedIngredients;
+      const [branchOfficeStore, selectedIngredients] = await Promise.all([
+        branchOfficeStorePromise,
+        selectedIngredientsPromise
+      ]);
+      product.branch_office = branchOfficeStore!._id;
+      product.selected_ingredients = selectedIngredients;
+    } else {
+      const branchOfficeStore = await this.branchOfficeRepo.findOne({ id: product.branch_office }, '_id', true);
+      product.branch_office = branchOfficeStore!._id;
+    }
 
     if (typeof product.active === 'undefined') product.active = true;
 
@@ -179,16 +183,20 @@ export class ProductRepository {
    * @returns The updated product.
    */
   public async update(conditions: Object, product: IUpdateProduct) {
-    const branchOfficeStorePromise = this.branchOfficeRepo.findOne({ id: product.branch_office }, '_id', true);
-    const selectedIngredientsPromise = this.prepareIngredientsToSave(product.selected_ingredients);
+    if (product.selected_ingredients && product.selected_ingredients.length > 0) {
+      const branchOfficeStorePromise = this.branchOfficeRepo.findOne({ id: product.branch_office }, '_id', true);
+      const selectedIngredientsPromise = this.prepareIngredientsToSave(product.selected_ingredients);
 
-    const [branchOfficeStore, selectedIngredients] = await Promise.all([
-      branchOfficeStorePromise,
-      selectedIngredientsPromise
-    ]);
-
-    product.branch_office = branchOfficeStore!._id;
-    product.selected_ingredients = selectedIngredients;
+      const [branchOfficeStore, selectedIngredients] = await Promise.all([
+        branchOfficeStorePromise,
+        selectedIngredientsPromise
+      ]);
+      product.branch_office = branchOfficeStore!._id;
+      product.selected_ingredients = selectedIngredients;
+    } else {
+      const branchOfficeStore = await this.branchOfficeRepo.findOne({ id: product.branch_office }, '_id', true);
+      product.branch_office = branchOfficeStore!._id;
+    }
 
     try {
       return await this.productStore.findOneAndUpdate(conditions, product, {

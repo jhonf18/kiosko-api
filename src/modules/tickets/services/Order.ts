@@ -4,6 +4,7 @@ import { ProductRepository } from './../../backOffice/repository/product';
 import { ICreateOrderInput, ISelectedProductInput } from './../dto';
 import { TicketRepository } from './../repository/ticket';
 
+import moment from 'moment';
 import { ApiError } from './../../../config/errors/ApiError';
 import { httpStatus } from './../../../config/errors/httpStatusCodes';
 import { BranchOfficeRepository } from './../../backOffice/repository/branchOffice';
@@ -69,14 +70,34 @@ export class OrderService {
     return response;
   }
 
-  public async getOrders(filter: Object, getData?: string) {
+  public async getOrders(filter: any, getData?: string) {
     getData = getData || '';
     const getDataArray = getData.split(',');
     getData = getDataArray.join(' ');
 
+    // Find orders per days
+    if (filter.today) {
+      // Get date with format
+      const today = moment(new Date(Number(filter.today)));
+      // Add the search filter for tickets after a certain date
+      filter.created_at = { $gte: today.utc() };
+    }
+
+    if (filter.sort_by) {
+      const type = filter.sort_by.split('(')[0];
+      const field = filter.sort_by.substring(filter.sort_by.indexOf('(') + 1, filter.sort_by.lastIndexOf(')'));
+      filter.sort = {
+        type,
+        field
+      };
+      delete filter.sort_by;
+    }
+
     let orders = (await this.orderRepo.find(filter, getData)) as any;
 
     orders = JSON.parse(JSON.stringify(orders));
+
+    // TODO: Verificar el envio de datos con productos sin ingredientes como bebidas
 
     for (let i = 0; i < orders.length; i++) {
       const order = orders[i];
@@ -166,7 +187,23 @@ export class OrderService {
   public async addProductsToOrder(orderID: string, products: Array<ISelectedProductInput>) {
     if (!orderID) throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'No se puede leer el ID', true);
 
-    const result = await this.orderRepo.update({ id: orderID }, { added_products: products });
+    if (!products || products.length === 0)
+      throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'Es necesario agregar productos.', true);
+
+    const orderStore = await this.orderRepo.findOne({ id: orderID }, 'id is_open _id total_price branch_office');
+
+    if (!orderStore)
+      throw new ApiError('Not Found Order', httpStatus.NOT_FOUND, 'No se ha encontrado la orden a editar', true);
+
+    if (!orderStore.is_open)
+      throw new ApiError(
+        'Bad Request',
+        httpStatus.BAD_REQUEST,
+        'No es posible editar la orden debido a que ya está cerrada. Para poder editar es necesario que líder vuelva abrirla.',
+        true
+      );
+
+    const result = await this.orderRepo.update({ id: orderID }, { added_products: products }, orderStore);
 
     return { order: result };
   }
@@ -177,9 +214,17 @@ export class OrderService {
     if (!dataForDeleteProduct.productID || dataForDeleteProduct.productID.length < 1)
       throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'El ID del producto a elimiar no es válido.', true);
 
+    if (!dataForDeleteProduct.comments || dataForDeleteProduct.comments.length < 1)
+      throw new ApiError(
+        'Bad Request',
+        httpStatus.BAD_REQUEST,
+        'No se puede leer los comentarios (Son necesarios).',
+        true
+      );
+
     const ordersStorePromise = this.orderRepo.find(
       { id: orderID },
-      'selected_products selected_products.id category selected_products._id id total_price _id',
+      'selected_products category id total_price _id is_open',
       true
     );
     const productStorePromise = this.productRepo.findOne(
@@ -192,7 +237,15 @@ export class OrderService {
     if (!ordersStore || ordersStore.length === 0)
       throw new ApiError('Not Found Order', httpStatus.NOT_FOUND, 'No se ha encontrado la orden solicitada.', true);
 
-    const orderStore = ordersStore[0] as any;
+    const orderStore = ordersStore[0];
+
+    if (!orderStore.is_open)
+      throw new ApiError(
+        'Bad Request',
+        httpStatus.BAD_REQUEST,
+        'No es posible editar la orden debido a que ya está cerrada. Para poder editar es necesario que líder vuelva abrirla.',
+        true
+      );
 
     if (orderStore.selected_products.length === 1)
       throw new ApiError(
@@ -213,6 +266,19 @@ export class OrderService {
     // We should delete the tickets of this order
     const uuidOfProductInOrder = dataForDeleteProduct.comments.split('::')[0];
 
+    const indexOfProductInSelectedProductOfOrder = orderStore.selected_products.findIndex((el: any) => {
+      const id = el.comments?.split('::')[0];
+      return id === uuidOfProductInOrder;
+    });
+
+    if (indexOfProductInSelectedProductOfOrder < 0)
+      throw new ApiError(
+        'Not Found Product In Order',
+        httpStatus.NOT_FOUND,
+        'No se ha encontrado el producto dentro de la orden.',
+        true
+      );
+
     if (productStore.passage_sections.includes('COCINA') || productStore.passage_sections.includes('HORNO')) {
       const tickets = await this.ticketRepo.find(
         { product: productStore.id, order: orderStore._id },
@@ -224,7 +290,7 @@ export class OrderService {
         // Search ticket for this product
         const ticketForThisProduct = tickets.find(ticket => {
           const uuidOfProduct = ticket?.comments.split('::')[0];
-          uuidOfProduct === uuidOfProductInOrder;
+          return uuidOfProduct === uuidOfProductInOrder;
         });
 
         // Delete this ticket in Db
@@ -238,7 +304,7 @@ export class OrderService {
               true
             );
 
-          const deleteCount = await this.ticketRepo.deleteMany([{ _id: ticketForThisProduct._id }]);
+          const deleteCount = await this.ticketRepo.deleteMany({ _id: ticketForThisProduct._id });
           if (!deleteCount || deleteCount < 1) {
             throw new ApiError(
               'Internal Server Error',
@@ -250,19 +316,6 @@ export class OrderService {
         }
       }
     }
-
-    const indexOfProductInSelectedProductOfOrder = orderStore.selected_products.findIndex((el: any) => {
-      const id = el.comments?.split('::')[0];
-      return id === uuidOfProductInOrder;
-    });
-
-    if (!indexOfProductInSelectedProductOfOrder)
-      throw new ApiError(
-        'Not Found Product In Order',
-        httpStatus.NOT_FOUND,
-        'No se ha encontrado el producto dentro de la orden.',
-        true
-      );
 
     orderStore.selected_products.splice(indexOfProductInSelectedProductOfOrder, 1);
 
@@ -291,7 +344,7 @@ export class OrderService {
 
     const productStorePromise = this.productRepo.findOne({ id: productID }, 'id passage_sections price');
 
-    const ordersStorePromise = this.orderRepo.find({ id: orderID }, 'selected_products id _id', true);
+    const ordersStorePromise = this.orderRepo.find({ id: orderID }, 'selected_products id _id is_open', true);
 
     const [ordersStore, productStore] = await Promise.all([ordersStorePromise, productStorePromise]);
 
@@ -307,10 +360,34 @@ export class OrderService {
       );
 
     const orderStore = ordersStore[0];
+
+    if (!orderStore.is_open)
+      throw new ApiError(
+        'Bad Request',
+        httpStatus.BAD_REQUEST,
+        'No es posible editar la orden debido a que ya está cerrada. Para poder editar es necesario que líder vuelva abrirla.',
+        true
+      );
+
     const uuidThisProduct = comments.split('::')[0];
     const comment = comments.split('::')[1];
 
     const newComment = `${uuidThisProduct}::${comment}`;
+
+    console.log(orderStore);
+
+    const indexProductObj = orderStore.selected_products.findIndex(el => {
+      const uuid = el.comments.split('::')[0];
+      return uuid === uuidThisProduct;
+    });
+
+    if (indexProductObj < 0)
+      throw new ApiError(
+        'Not Found Product',
+        httpStatus.NOT_FOUND,
+        'No se ha encontrado el producto asociado a la orden.',
+        true
+      );
 
     if (productStore.passage_sections.includes('COCINA') || productStore.passage_sections.includes('HORNO')) {
       const tickets = await this.ticketRepo.find(
@@ -323,7 +400,7 @@ export class OrderService {
         // Search ticket for this product
         const ticketForThisProduct = tickets.find(ticket => {
           const uuidOfProduct = ticket?.comments.split('::')[0];
-          uuidOfProduct === uuidThisProduct;
+          return uuidOfProduct === uuidThisProduct;
         });
 
         // Delete this ticket in Db
@@ -333,7 +410,7 @@ export class OrderService {
             throw new ApiError(
               'Bad Request',
               httpStatus.BAD_REQUEST,
-              'No ha sido posible añadir el comentario, debido a que ya se ha comenzado a preparar el producto.',
+              'No ha sido posible editar el producto, debido a que ya se ha comenzado a preparar.',
               true
             );
 
@@ -357,19 +434,6 @@ export class OrderService {
         }
       }
     }
-
-    const indexProductObj = orderStore.selected_products.findIndex(el => {
-      const uuid = el.comments.split('::')[0];
-      uuid === uuidThisProduct;
-    });
-
-    if (!indexProductObj)
-      throw new ApiError(
-        'Not Found Product',
-        httpStatus.NOT_FOUND,
-        'No se ha encontrado el producto asociado a la orden.',
-        true
-      );
 
     orderStore.selected_products[indexProductObj].comments = newComment;
     if (ingredients) {
