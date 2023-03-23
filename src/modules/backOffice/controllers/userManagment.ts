@@ -20,6 +20,16 @@ export const updateUserController = async (req: Request, res: Response, next: Ne
   }
 };
 
+export const verifyPasswordController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await userServiceManagment.verifyPassword(res.locals.userID, req.body.password);
+
+    response({}, 'OK', httpStatus.OK, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const deleteUserController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     await userServiceManagment.deleteUser(req.params.idUser);
@@ -32,4 +42,15 @@ export const deleteUserController = async (req: Request, res: Response, next: Ne
 
 export const getRolesController = (_req: Request, res: Response) => {
   return response([ROLES], 'OK', httpStatus.OK, res);
+};
+
+export const getUsersController = async (req: Request, res: Response, next: NextFunction) => {
+  let filter = JSON.parse(JSON.stringify(req.query));
+  delete filter.get;
+  try {
+    const users = await userServiceManagment.getUsers(filter, req.query.get as string);
+    return response(users, 'OK', httpStatus.OK, res);
+  } catch (error) {
+    next(error);
+  }
 };

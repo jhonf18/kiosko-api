@@ -90,3 +90,34 @@ export const checkIsStringsArray = (arr: Array<any>) => {
 
   return true;
 };
+
+/**
+ * It returns an object with three properties:
+ *
+ * equals: A boolean that indicates whether the two arrays are equal.
+ * differenceElementsFirstArray: An array of elements that are in the first array but not in the
+ * second.
+ * differenceElementsSecondArray: An array of elements that are in the second array but not in the
+ * first.
+ * The function uses the Set object to create two sets from the two arrays.
+ * @param {T[]} arrayA - The first array to compare.
+ * @param {T[]} arrayB - T[] - The array to compare against.
+ */
+export const differenceBetweenArrays = <T>(
+  arrayA: T[],
+  arrayB: T[]
+): { areEquals: boolean; differenceElementsFirstArray: T[]; differenceElementsSecondArray: T[] } => {
+  const setA = new Set(arrayA);
+  const setB = new Set(arrayB);
+
+  const ADifferenceB = new Set([...setA].filter(x => !setB.has(x)));
+  const BDifferenceA = new Set([...setB].filter(x => !setA.has(x)));
+
+  const areEquals = ADifferenceB.size === 0 && BDifferenceA.size === 0;
+
+  return {
+    areEquals,
+    differenceElementsFirstArray: [...ADifferenceB],
+    differenceElementsSecondArray: [...BDifferenceA]
+  };
+};

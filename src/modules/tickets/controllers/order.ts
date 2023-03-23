@@ -30,7 +30,7 @@ export const getOrdersController = async (req: Request, res: Response, next: Nex
       return response(null, 'No se encontraron ordenes.', httpStatus.OK, res);
     }
 
-    return response([...data], 'OK', httpStatus.OK, res);
+    return response(data, 'OK', httpStatus.OK, res);
   } catch (error) {
     next(error);
   }

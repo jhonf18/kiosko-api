@@ -34,7 +34,11 @@ export class UserServiceManagment {
       throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'El rol no es correcto', true);
     }
 
-    const userStore = await this.userRepo.getUser({ nameField: 'id', valueField: id }, 'id branch_office password');
+    const userStore = await this.userRepo.getUser(
+      { nameField: 'id', valueField: id },
+      'id branch_office password _id',
+      true
+    );
     if (!userStore) {
       throw new ApiError('Not Found', httpStatus.NOT_FOUND, 'No se ha encontrado el usuario', true);
     }
@@ -111,5 +115,39 @@ export class UserServiceManagment {
     }
 
     return true;
+  }
+
+  public async getUsers(filter: Object, getData: string): Promise<any[]> {
+    getData = getData || '';
+    let dataArray = getData.split(',');
+    getData = dataArray.join(' ');
+
+    let users = (await this.userRepo.getUsers(filter, getData)) as any;
+
+    return users;
+  }
+
+  public async verifyPassword(id: string, password: string) {
+    if (!password || password.length === 0) {
+      throw new ApiError('Bad Requesst', httpStatus.BAD_REQUEST, 'Es necesario ingresar la contraseña', true);
+    }
+
+    console.log(id);
+
+    const userStore = await this.userRepo.getUser(
+      { nameField: 'id', valueField: id },
+      'id branch_office password _id',
+      true
+    );
+    if (!userStore) {
+      throw new ApiError('Not Found', httpStatus.NOT_FOUND, 'No se ha encontrado el usuario', true);
+    }
+
+    const comparePassword = await this.hashingPassword.comparePassword(userStore.password, password);
+    if (!comparePassword) {
+      throw new ApiError('Unauthorized', httpStatus.UNAUTHORIZED, 'Contraseña incorrecta', true);
+    }
+
+    return 'OK';
   }
 }

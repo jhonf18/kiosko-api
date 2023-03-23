@@ -13,10 +13,7 @@ export class BranchOfficeSchema {
   address: string;
 
   @prop({ ref: () => Array<UserSchema>, type: () => Array<String>, required: false, default: [] })
-  employees?: Array<Ref<UserSchema, string>>;
-
-  @prop({ ref: () => Array<UserSchema>, type: () => Array<String>, required: false, default: [] })
-  leaders?: Array<Ref<UserSchema, string>>;
+  employees: Array<Ref<UserSchema, string>>;
 
   @prop({ default: Date.now(), type: () => Date })
   created_at: Date;

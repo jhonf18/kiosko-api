@@ -10,7 +10,7 @@ export const getBranchOfficesController = async (req: Request, res: Response, ne
       return response(null, 'No se encontrarón sucursales', httpStatus.OK, res);
     }
 
-    return response([data], 'OK', httpStatus.OK, res);
+    return response(data, 'OK', httpStatus.OK, res);
   } catch (error) {
     next(error);
   }
@@ -30,13 +30,13 @@ export const getBranchOfficeController = async (req: Request, res: Response, nex
 
 export const createBranchOfficeController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let data = await branchOfficeService.createBranchOffice({
+    const { branch_office } = await branchOfficeService.createBranchOffice({
       name: req.body.name,
       address: req.body.address,
       employees: req.body.employees
     });
 
-    response([data], 'OK', httpStatus.CREATED, res);
+    response(branch_office, 'OK', httpStatus.CREATED, res);
   } catch (error) {
     next(error);
   }
@@ -44,13 +44,13 @@ export const createBranchOfficeController = async (req: Request, res: Response, 
 
 export const updateBranchOfficeController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let data = await branchOfficeService.updateBranchOffice(req.params.idBranchOffice, {
+    const { branch_office } = (await branchOfficeService.updateBranchOffice(req.params.idBranchOffice, {
       name: req.body.name,
       address: req.body.address,
       employees: req.body.employees
-    });
+    })) as any;
 
-    response([data], 'OK', httpStatus.CREATED, res);
+    response(branch_office, 'OK', httpStatus.CREATED, res);
   } catch (error) {
     next(error);
   }

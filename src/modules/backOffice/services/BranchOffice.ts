@@ -2,12 +2,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { deleteFields } from '../../utils/deleteFields';
 import { ApiError } from './../../../config/errors/ApiError';
 import { httpStatus } from './../../../config/errors/httpStatusCodes';
+import { UserRepository } from './../../../shared/repository/user';
 import { isNotEmpty } from './../../utils/validations';
 import { createBranchOfficeInput, updateBranchOfficeInput } from './../dto/branchOffice';
 import { BranchOfficeRepository } from './../repository/branchOffice';
 
 export class BranchOfficeService {
-  constructor(private branchOfficeRepo: BranchOfficeRepository) {}
+  constructor(private branchOfficeRepo: BranchOfficeRepository, private readonly userRepo: UserRepository) {}
 
   public async createBranchOffice(branchOfficeInput: createBranchOfficeInput) {
     // validate fields
@@ -25,7 +26,11 @@ export class BranchOfficeService {
       employees: branchOfficeInput.employees
     });
 
-    return { branch_office: deleteFields(branchOfficeRecord, ['employees']) };
+    if (branchOfficeInput.employees && branchOfficeInput.employees.length > 0) {
+      await this.userRepo.updateManyUsersForIds(branchOfficeInput.employees, { branch_office: branchOfficeRecord._id });
+    }
+
+    return { branch_office: deleteFields(branchOfficeRecord) };
   }
 
   public async getBranchOffices(getData?: string) {
@@ -68,7 +73,7 @@ export class BranchOfficeService {
       addEmployee
     );
 
-    return { branch_office: branchOfficeRecord };
+    return { branch_office: deleteFields(branchOfficeRecord as any) };
   }
 
   public async deleteBranchOffice(id: string) {
@@ -76,7 +81,6 @@ export class BranchOfficeService {
       throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'No se puede leer el ID', true);
     }
     const branchDelete = await this.branchOfficeRepo.delete({ id: id });
-    console.log(branchDelete);
     if (!branchDelete || branchDelete === 0) {
       throw new ApiError('Not Found', httpStatus.NOT_FOUND, 'No se encontro sucursal para eliminar', true);
     }

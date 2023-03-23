@@ -6,7 +6,12 @@ import {
   getBranchOfficesController,
   updateBranchOfficeController
 } from './../controllers/branchOffice';
-import { deleteUserController, getRolesController, updateUserController } from './../controllers/userManagment';
+import {
+  deleteUserController,
+  getRolesController,
+  updateUserController,
+  verifyPasswordController
+} from './../controllers/userManagment';
 
 const routesAdmin = express();
 
@@ -19,6 +24,7 @@ routesAdmin.get('/roles', getRolesController);
 // Methods POST
 
 routesAdmin.post('/create-branch-office', createBranchOfficeController);
+routesAdmin.post('/verify-password', verifyPasswordController);
 
 // Methods PUT
 

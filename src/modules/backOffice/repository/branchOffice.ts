@@ -2,7 +2,7 @@ import { ApiError } from './../../../config/errors/ApiError';
 import { httpStatus } from './../../../config/errors/httpStatusCodes';
 import { UserRepository } from './../../../shared/repository/user';
 import { UserModel } from './../../../shared/schemas/user';
-import { getElementsDifferentsOfTwoArrays } from './../../../utilities/index';
+import { differenceBetweenArrays } from './../../../utilities/index';
 import { parameterizeSearchWithParams } from './../../utils/parameterizeSearchWithParams';
 import { IBranchOffice, IUpdateBranchOffice } from './../interfaces/branchOffice';
 import { BranchOfficeModel } from './../schemas/branchOffice';
@@ -10,51 +10,67 @@ import { BranchOfficeModel } from './../schemas/branchOffice';
 export class BranchOfficeRepository {
   constructor(private userRepo: UserRepository, private branchOfficeStore: typeof BranchOfficeModel) {}
 
-  private getKeysId(array: Array<any>): Array<any> {
-    let arr: Array<any> = [];
-    array.forEach(el => {
-      arr.push(el._id);
-    });
-
-    return arr;
-  }
-
   private async preparateDataForDB(
-    branchOffice: IBranchOffice | { employees?: Array<string> },
+    branchOffice: IBranchOffice | { employees?: string[] },
     branchOfficeStore?: any
   ): Promise<IBranchOffice | any> {
-    let employees = [];
-
-    try {
-      if (branchOffice.employees && branchOffice.employees.length !== 0) {
-        employees = await this.userRepo.findUsersFromArrayIdsToIdkey(branchOffice!.employees);
-      }
-
-      if (branchOfficeStore) {
-        branchOffice = branchOfficeStore;
-        if (branchOffice.employees) {
-          const ids = this.getKeysId(branchOffice.employees);
-
-          branchOffice.employees = branchOffice.employees.concat(getElementsDifferentsOfTwoArrays(employees, ids));
-        }
-      } else {
-        branchOffice.employees = employees;
-      }
-
+    if (!branchOfficeStore && branchOffice.employees) {
+      branchOffice.employees = await this.userRepo.findUsersFromArrayIdsToIdkey(branchOffice!.employees);
       return branchOffice;
-    } catch (error: any) {
-      if (error instanceof ApiError) {
-        throw new ApiError(error.name, error.statusCode, error.description, true, error.cause);
-      } else {
-        throw new ApiError(
-          'Internal Error',
-          httpStatus.INTERNAL_SERVER_ERROR,
-          'Ha ocurrido un error inesperado al crear la sucursal',
-          true,
-          error.message
-        );
+    }
+
+    if (branchOfficeStore && branchOfficeStore.employees && branchOffice.employees) {
+      try {
+        const employesStoreIDS = branchOfficeStore.employees.map((e: any) => e.id);
+        const employesStoreIDSKey = branchOfficeStore.employees.map((e: any) => e._id);
+
+        // Comparate Ids of users for update with users in store
+        const {
+          areEquals,
+          differenceElementsFirstArray: userIDSToDeleteBranchOffice,
+          differenceElementsSecondArray: userIDSToAddBranchOffice
+        } = differenceBetweenArrays(employesStoreIDS, branchOffice.employees);
+
+        if (areEquals) {
+          branchOffice.employees = employesStoreIDSKey;
+        } else {
+          branchOffice.employees = branchOfficeStore.employees.map((e: any) => e._id);
+
+          if (userIDSToDeleteBranchOffice.length > 0) {
+            this.userRepo.updateManyUsersForIds(userIDSToDeleteBranchOffice, { branch_office: null });
+            const remainingEmployees = branchOfficeStore.employees
+              .filter((e: any) => !userIDSToDeleteBranchOffice.includes(e.id))
+              .map((e: any) => e._id);
+            branchOffice.employees = branchOffice.employees?.filter(d => remainingEmployees.includes(d));
+          }
+
+          if (userIDSToAddBranchOffice.length > 0) {
+            branchOffice.employees = branchOffice.employees || [];
+            branchOffice.employees = branchOffice.employees?.concat(
+              await this.userRepo.findUsersFromArrayIdsToIdkey(userIDSToAddBranchOffice)
+            );
+            await this.userRepo.updateManyUsersForIds(userIDSToAddBranchOffice, {
+              branch_office: branchOfficeStore._id
+            });
+          }
+
+          return branchOffice;
+        }
+      } catch (error: any) {
+        if (error instanceof ApiError) {
+          throw new ApiError(error.name, error.statusCode, error.description, true, error.cause);
+        } else {
+          throw new ApiError(
+            'Internal Error',
+            httpStatus.INTERNAL_SERVER_ERROR,
+            'Ha ocurrido un error inesperado al crear o al actualizar la sucursal.',
+            true,
+            error.message
+          );
+        }
       }
     }
+    return branchOffice;
   }
 
   public async save(branchOffice: Object) {
@@ -63,7 +79,11 @@ export class BranchOfficeRepository {
 
     try {
       const branchOfficeRecord = await branchOfficeStore.save();
-      return branchOfficeRecord;
+      return branchOfficeRecord.populate({
+        path: 'employees',
+        model: UserModel,
+        select: 'id name role nickname -_id'
+      });
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',
@@ -111,12 +131,12 @@ export class BranchOfficeRepository {
   }
 
   public async findOne(conditions: Object, getData?: string, getKeyID?: boolean) {
-    let populate = [];
+    let populate: any[] = [];
 
     if (getData) {
       const parametrizationSearchParams = !getKeyID
-        ? parameterizeSearchWithParams(getData, 'password _id __v', '-_id')
-        : parameterizeSearchWithParams(getData, 'password _id __v');
+        ? parameterizeSearchWithParams(getData, '_id __v', '-_id')
+        : parameterizeSearchWithParams(getData, '_id __v');
       getData = parametrizationSearchParams.select;
 
       if (parametrizationSearchParams.populateOneLevel.length > 0) {
@@ -124,7 +144,7 @@ export class BranchOfficeRepository {
           if (populate.path === 'employees') {
             populate.model = UserModel;
           }
-          populate.select += '-_id';
+          if (!getKeyID) populate.select += '-_id';
         }
 
         populate = parametrizationSearchParams.populateOneLevel;
@@ -134,34 +154,31 @@ export class BranchOfficeRepository {
     }
 
     try {
-      const branchOfficesStore = await this.branchOfficeStore.findOne(conditions, getData).populate(populate);
-
-      return branchOfficesStore;
+      return await this.branchOfficeStore.findOne(conditions, getData).populate(populate);
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',
         httpStatus.INTERNAL_SERVER_ERROR,
-        'Ha ocurrido un error inesperado al obtener la sucursale',
+        'Ha ocurrido un error inesperado al obtener la sucursal.',
         true,
         error.message
       );
     }
   }
 
-  public async update(conditions: Object, branchOffice: IUpdateBranchOffice, addEmployee?: boolean) {
-    let branchOfficeStore: any;
-    if (addEmployee) {
-      branchOfficeStore = await this.findOne(conditions, 'employees');
-    } else {
-      branchOfficeStore = null;
-    }
+  public async update(conditions: Object, branchOffice: IUpdateBranchOffice, _addEmployee?: boolean) {
+    const branchOfficeStore = await this.findOne(conditions, 'employees.id employees._id _id', true);
 
     const branchOfficeOK = await this.preparateDataForDB(branchOffice, branchOfficeStore);
     try {
       const updateBranchOfficeStore = await this.branchOfficeStore.findOneAndUpdate(conditions, branchOfficeOK, {
         new: true
       });
-      return updateBranchOfficeStore;
+      return updateBranchOfficeStore?.populate({
+        path: 'employees',
+        model: UserModel,
+        select: 'id name nickname role -_id'
+      });
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',

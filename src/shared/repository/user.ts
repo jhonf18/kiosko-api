@@ -84,10 +84,7 @@ export class UserRepository {
     }
   }
 
-  public async getUsers(field: { nameField: string; valueField: any }, getData?: string, getFullData?: boolean) {
-    const filter: any = {};
-    filter[`${field.nameField}`] = field.valueField;
-
+  public async getUsers(filter: Object, getData?: string, getFullData?: boolean) {
     let populate = [];
 
     if (!getFullData && getData) {
@@ -105,12 +102,12 @@ export class UserRepository {
         populate = parametrizationSearchParams.populateOneLevel;
       }
     } else {
-      getData = '';
+      getData = '-_id -__v';
     }
 
     try {
-      if (getFullData) return await this.userStore.findOne(filter);
-      else return await this.userStore.findOne(filter, getData).populate(populate);
+      if (getFullData) return await this.userStore.find(filter);
+      else return await this.userStore.find(filter, getData).populate(populate);
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',
@@ -152,7 +149,8 @@ export class UserRepository {
     let _ids = [];
 
     for await (const userID of array) {
-      let user = await this.getUser({ nameField: 'id', valueField: userID }, '_id');
+      let user = await this.getUser({ nameField: 'id', valueField: userID }, '_id', true);
+
       if (!user) {
         throw new ApiError(
           'Bad Request',
@@ -202,6 +200,24 @@ export class UserRepository {
       const result = await this.userStore.deleteOne(conditions);
 
       return result.deletedCount;
+    } catch (error: any) {
+      throw new ApiError(
+        'Internal Error',
+        httpStatus.INTERNAL_SERVER_ERROR,
+        'Ha ocurrido un error inesperado al eliminar el usuario',
+        true,
+        error.message
+      );
+    }
+  }
+
+  public async updateManyUsersForIds(ids: string[], update: object) {
+    const conditionsOK = {
+      $or: ids.map(id => ({ id: id }))
+    };
+
+    try {
+      return await this.userStore.updateMany(conditionsOK, update);
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',

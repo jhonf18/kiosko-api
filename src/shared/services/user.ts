@@ -10,7 +10,7 @@ export class UserService {
   }
 
   public async findUsersById(id: string, get?: string) {
-    return this.userRepo.getUsers({ nameField: 'id', valueField: id }, get);
+    return this.userRepo.getUsers({ id }, get);
   }
 
   public async findUserById(id: string, get?: string, getFullData?: boolean): Promise<UserDocument | null> {
