@@ -22,9 +22,9 @@ export const updateUserController = async (req: Request, res: Response, next: Ne
 
 export const verifyPasswordController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await userServiceManagment.verifyPassword(res.locals.userID, req.body.password);
+    const { result } = await userServiceManagment.verifyPassword(res.locals.userID, req.body.password);
 
-    response({}, 'OK', httpStatus.OK, res);
+    response(result, 'OK', httpStatus.OK, res);
   } catch (error) {
     next(error);
   }
@@ -41,7 +41,20 @@ export const deleteUserController = async (req: Request, res: Response, next: Ne
 };
 
 export const getRolesController = (_req: Request, res: Response) => {
-  return response([ROLES], 'OK', httpStatus.OK, res);
+  const roles = [
+    { value: 'ROLE_ADMIN', name: 'Administrador' },
+    { value: 'ROLE_WAITER', name: 'Mesero' },
+    { value: 'ROLE_LEADER', name: 'Líder' },
+    { value: 'ROLE_KITCHEN_COOK', name: 'Cocinero de cocina' },
+    { value: 'ROLE_OVEN_COOK', name: 'Cocinero de horno' }
+  ];
+  const values = Object.values(ROLES);
+
+  const rolesWithNames = values.map(v => {
+    return roles.find(r => r.value === v);
+  });
+
+  return response(rolesWithNames, 'OK', httpStatus.OK, res);
 };
 
 export const getUsersController = async (req: Request, res: Response, next: NextFunction) => {

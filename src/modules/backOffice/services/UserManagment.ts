@@ -77,7 +77,7 @@ export class UserServiceManagment {
     }
 
     // Hashing password
-    if (userInput.password) {
+    if (userInput.password && userInput.password.length > 0) {
       userStore.password = await this.hashingPassword.encryptPassword(userInput.password);
     }
 
@@ -131,9 +131,6 @@ export class UserServiceManagment {
     if (!password || password.length === 0) {
       throw new ApiError('Bad Requesst', httpStatus.BAD_REQUEST, 'Es necesario ingresar la contraseña', true);
     }
-
-    console.log(id);
-
     const userStore = await this.userRepo.getUser(
       { nameField: 'id', valueField: id },
       'id branch_office password _id',
@@ -145,9 +142,14 @@ export class UserServiceManagment {
 
     const comparePassword = await this.hashingPassword.comparePassword(userStore.password, password);
     if (!comparePassword) {
-      throw new ApiError('Unauthorized', httpStatus.UNAUTHORIZED, 'Contraseña incorrecta', true);
+      // throw new ApiError('Unauthorized', httpStatus.UNAUTHORIZED, 'Contraseña incorrecta', true);
+      return {
+        result: { status: 'FAILED', message: 'Contraseña incorrecta' }
+      };
+    } else {
+      return {
+        result: { status: 'SUCCESS', message: 'OK' }
+      };
     }
-
-    return 'OK';
   }
 }

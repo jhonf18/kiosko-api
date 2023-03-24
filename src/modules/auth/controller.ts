@@ -41,7 +41,7 @@ routesAuth.post(
   new MiddlewareAuthentication(['ROLE_ADMIN', 'ROLE_LEADER']).verifyToken,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      let user = await authService.signup({
+      const { user } = await authService.signup({
         name: req.body.name,
         email: req.body.email,
         password_1: req.body.password_1,
@@ -50,7 +50,7 @@ routesAuth.post(
         branchOffice: req.body.branch_office
       });
 
-      response([user], 'OK', httpStatus.CREATED, res);
+      response(user, 'OK', httpStatus.CREATED, res);
     } catch (error) {
       next(error);
     }

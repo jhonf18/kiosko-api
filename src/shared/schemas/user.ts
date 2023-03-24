@@ -33,7 +33,7 @@ export class UserSchema {
   @prop({ ref: () => BranchOfficeSchema, required: true })
   branch_office: Ref<BranchOfficeSchema>;
 
-  @prop({ type: () => Boolean, required: false, default: false })
+  @prop({ type: () => Boolean, required: false, default: true })
   active?: boolean;
 
   // Timestamps

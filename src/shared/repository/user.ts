@@ -29,7 +29,11 @@ export class UserRepository {
     user.branch_office = branchOfficeStore._id;
     try {
       let userDB = await user.save();
-      return userDB;
+      return userDB.populate({
+        path: 'branch_office',
+        select: 'id name -_id',
+        model: BranchOfficeModel
+      });
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',
