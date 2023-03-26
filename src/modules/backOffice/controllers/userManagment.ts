@@ -6,7 +6,7 @@ import { userServiceManagment } from './../dependencyInjector';
 
 export const updateUserController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let data = await userServiceManagment.updateUser(req.params.idUser, {
+    const { user } = await userServiceManagment.updateUser(req.params.idUser, {
       name: req.body.name,
       password: req.body.password,
       role: req.body.role,
@@ -14,7 +14,7 @@ export const updateUserController = async (req: Request, res: Response, next: Ne
       active: req.body.active
     });
 
-    response([data], 'OK', httpStatus.CREATED, res);
+    response(user, 'OK', httpStatus.CREATED, res);
   } catch (error) {
     next(error);
   }

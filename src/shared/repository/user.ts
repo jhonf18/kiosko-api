@@ -182,7 +182,11 @@ export class UserRepository {
     userObj.branch_office = branchOfficeStore._id;
 
     try {
-      return await this.userStore.findOneAndUpdate({ id }, userObj, { new: true }).select('-_id -__v');
+      return await this.userStore.findOneAndUpdate({ id }, userObj, { new: true }).select('-_id -__v').populate({
+        path: 'branch_office',
+        model: BranchOfficeModel,
+        select: 'id name address -_id'
+      });
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',

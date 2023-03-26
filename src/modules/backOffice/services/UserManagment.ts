@@ -46,7 +46,7 @@ export class UserServiceManagment {
     // Search back office
     const branchOfficeStore = await this.branchOfficeService.getBranchOffice(
       userInput.branchOffice,
-      'id back_office _id'
+      'id employees employees.id _id'
     );
     if (!branchOfficeStore)
       throw new ApiError(
@@ -59,21 +59,23 @@ export class UserServiceManagment {
     // Remove user from the branch in which he was already
     await this.branchOfficeService.removeAUserFromBranchOffice(userStore.branch_office, 'employees', userStore._id);
 
-    // Update back office
-    let toAddUser: { leaders?: Array<string>; employees?: Array<string> } = {};
-    toAddUser.employees = [userStore.id as string];
-    const updateBranchOfficeResult = await this.branchOfficeService.updateBranchOffice(
-      branchOfficeStore.id,
-      toAddUser,
-      true
-    );
-    if (!updateBranchOfficeResult.branch_office) {
-      throw new ApiError(
-        'Interal Error',
-        httpStatus.INTERNAL_SERVER_ERROR,
-        'Ha ocurrido un error al actualizar la sucursal',
-        true
-      );
+    const employeesIDS = branchOfficeStore.employees.map((e: any) => e.id) as string[];
+
+    if (!employeesIDS.includes(userStore.id)) {
+      let employeesWithNewUser: string[] = employeesIDS;
+      employeesWithNewUser.push(userStore.id as string);
+
+      const updateBranchOfficeResult = await this.branchOfficeService.updateBranchOffice(branchOfficeStore.id, {
+        employees: employeesWithNewUser
+      });
+      if (!updateBranchOfficeResult.branch_office) {
+        throw new ApiError(
+          'Interal Error',
+          httpStatus.INTERNAL_SERVER_ERROR,
+          'Ha ocurrido un error al actualizar la sucursal',
+          true
+        );
+      }
     }
 
     // Hashing password
