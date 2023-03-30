@@ -13,7 +13,7 @@ export const getCategoriesController = async (req: Request, res: Response, next:
       return response(null, 'No se encontrarón ingredientes.', httpStatus.OK, res);
     }
 
-    return response([data], 'OK', httpStatus.OK, res);
+    return response(data, 'OK', httpStatus.OK, res);
   } catch (error) {
     next(error);
   }
@@ -22,12 +22,12 @@ export const getCategoriesController = async (req: Request, res: Response, next:
 // Controllers of type POST
 export const createCategoryController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let data = await productCategoryService.createCategoryOfProduct({
+    const { category } = await productCategoryService.createCategoryOfProduct({
       name: req.body.name,
       subcategories: req.body.subcategories
     });
 
-    response([data], 'OK', httpStatus.CREATED, res);
+    response(category, 'OK', httpStatus.CREATED, res);
   } catch (error) {
     next(error);
   }
@@ -36,12 +36,12 @@ export const createCategoryController = async (req: Request, res: Response, next
 // Controllers of type PUT
 export const updateCategoryController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let data = await productCategoryService.updateCategory(req.params.idCategory, {
+    const { category } = await productCategoryService.updateCategory(req.params.idCategory, {
       name: req.body.name,
       subcategories: req.body.subcategories
     });
 
-    response([data], 'OK', httpStatus.CREATED, res);
+    response(category, 'OK', httpStatus.OK, res);
   } catch (error) {
     next(error);
   }

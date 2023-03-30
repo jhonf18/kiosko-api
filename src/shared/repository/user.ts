@@ -173,13 +173,14 @@ export class UserRepository {
   public async updateUser(id: string, userUpdate: IUpdateUser) {
     const userObj = JSON.parse(JSON.stringify(userUpdate));
 
-    // Find branch office
-    const branchOfficeStore = await this.branchOfficeStore.findOne({ id: userUpdate.branchOffice }, '_id');
-    if (!branchOfficeStore) {
-      throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'El id de la sucursal es incorrecto', true);
+    if (userUpdate.role !== 'ROLE_ADMIN') {
+      // Find branch office
+      const branchOfficeStore = await this.branchOfficeStore.findOne({ id: userUpdate.branchOffice }, '_id');
+      if (!branchOfficeStore) {
+        throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'El id de la sucursal es incorrecto', true);
+      }
+      userObj.branch_office = branchOfficeStore._id;
     }
-
-    userObj.branch_office = branchOfficeStore._id;
 
     try {
       return await this.userStore.findOneAndUpdate({ id }, userObj, { new: true }).select('-_id -__v').populate({

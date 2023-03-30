@@ -20,66 +20,73 @@ export class UserServiceManagment {
 
   public async updateUser(id: string, userInput: IUpdateUser) {
     // Validate fields
-    const fields: Array<string> = ['name', 'role', 'branchOffice', 'active'];
+    const fields: Array<string> = ['name', 'role', 'active'];
 
     const validatorSignup = await this.validatorUser.Signup(userInput, fields);
     if (validatorSignup.error) {
       throw new ApiError('CUSTOM', httpStatus.BAD_REQUEST, 'Error in the inputs', true, validatorSignup.errors);
     }
 
-    // Validate that the role sent is among the available ones and that it is different from admin
-    const roleFound = getKeyByValue(ROLES, userInput.role);
-
-    if (!roleFound || roleFound === ROLES.ADMIN || userInput.role === ROLES.ADMIN) {
-      throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'El rol no es correcto', true);
-    }
-
     const userStore = await this.userRepo.getUser(
       { nameField: 'id', valueField: id },
-      'id branch_office password _id',
+      'id branch_office password _id role',
       true
     );
     if (!userStore) {
       throw new ApiError('Not Found', httpStatus.NOT_FOUND, 'No se ha encontrado el usuario', true);
     }
+    // Validate that the role sent is among the available ones and that it is different from admin
+    const roleFound = getKeyByValue(ROLES, userInput.role);
 
-    // Search back office
-    const branchOfficeStore = await this.branchOfficeService.getBranchOffice(
-      userInput.branchOffice,
-      'id employees employees.id _id'
-    );
-    if (!branchOfficeStore)
-      throw new ApiError(
-        'Not Found',
-        httpStatus.NOT_FOUND,
-        'No se ha encontrado la sucursal asignada al usuario',
-        true
+    if (
+      userStore.role !== 'ROLE_ADMIN' &&
+      (!roleFound || roleFound === ROLES.ADMIN || userInput.role === ROLES.ADMIN)
+    ) {
+      throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'El rol no es correcto', true);
+    }
+
+    if (userInput.branchOffice) {
+      // Search back office
+      const branchOfficeStore = await this.branchOfficeService.getBranchOffice(
+        userInput.branchOffice,
+        'id employees employees.id _id'
       );
-
-    // Remove user from the branch in which he was already
-    await this.branchOfficeService.removeAUserFromBranchOffice(userStore.branch_office, 'employees', userStore._id);
-
-    const employeesIDS = branchOfficeStore.employees.map((e: any) => e.id) as string[];
-
-    if (!employeesIDS.includes(userStore.id)) {
-      let employeesWithNewUser: string[] = employeesIDS;
-      employeesWithNewUser.push(userStore.id as string);
-
-      const updateBranchOfficeResult = await this.branchOfficeService.updateBranchOffice(branchOfficeStore.id, {
-        employees: employeesWithNewUser
-      });
-      if (!updateBranchOfficeResult.branch_office) {
+      if (!branchOfficeStore)
         throw new ApiError(
-          'Interal Error',
-          httpStatus.INTERNAL_SERVER_ERROR,
-          'Ha ocurrido un error al actualizar la sucursal',
+          'Not Found',
+          httpStatus.NOT_FOUND,
+          'No se ha encontrado la sucursal asignada al usuario',
           true
         );
+
+      // Remove user from the branch in which he was already
+      await this.branchOfficeService.removeAUserFromBranchOffice(userStore.branch_office, 'employees', userStore._id);
+
+      const employeesIDS = branchOfficeStore.employees.map((e: any) => e.id) as string[];
+
+      if (!employeesIDS.includes(userStore.id)) {
+        let employeesWithNewUser: string[] = employeesIDS;
+        employeesWithNewUser.push(userStore.id as string);
+
+        const updateBranchOfficeResult = await this.branchOfficeService.updateBranchOffice(branchOfficeStore.id, {
+          employees: employeesWithNewUser
+        });
+        if (!updateBranchOfficeResult.branch_office) {
+          throw new ApiError(
+            'Interal Error',
+            httpStatus.INTERNAL_SERVER_ERROR,
+            'Ha ocurrido un error al actualizar la sucursal',
+            true
+          );
+        }
       }
     }
 
+    console.log(userInput.password);
+
     // Hashing password
     if (userInput.password && userInput.password.length > 0) {
+      console.log(userInput.password);
       userStore.password = await this.hashingPassword.encryptPassword(userInput.password);
     }
 
