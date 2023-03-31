@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from 'uuid';
-import { getIndexOfElmentInArray } from './../../../utilities/index';
 
 import { typesOfIngredients } from '../../../shared/config/typeOfIngredient';
 import { deleteFields } from '../../utils/deleteFields';
@@ -22,7 +21,7 @@ export class IngredientService {
     }
 
     // Validate type of ingredient
-    if (typeof getIndexOfElmentInArray(typesOfIngredients, ingredientInput.type) === 'boolean')
+    if (!typesOfIngredients.includes(ingredientInput.type))
       throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'El tipo de ingrediente no es válido', true);
 
     const ingredientRecord = await this.ingredientRepo.save({
@@ -50,7 +49,7 @@ export class IngredientService {
     }
 
     // Validate type of ingredient
-    if (typeof getIndexOfElmentInArray(typesOfIngredients, updateIngredientInput.type) === 'boolean')
+    if (!typesOfIngredients.includes(updateIngredientInput.type))
       throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'El tipo de ingrediente no es válido', true);
 
     const ingredientStore = await this.ingredientRepo.findOne({ id }, 'id');

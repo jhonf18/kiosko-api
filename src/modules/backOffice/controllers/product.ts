@@ -69,12 +69,12 @@ export const getProductsController = async (req: Request, res: Response, next: N
 
 export const createIngredientController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let data = await ingredientService.createIngredient({
+    const { ingredient } = await ingredientService.createIngredient({
       name: req.body.name,
       type: req.body.type
     });
 
-    response([data], 'OK', httpStatus.CREATED, res);
+    response(ingredient, 'OK', httpStatus.CREATED, res);
   } catch (error) {
     next(error);
   }
@@ -117,12 +117,12 @@ export const createProductController = async (req: Request, res: Response, next:
 
 export const updateIngredientController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let data = await ingredientService.updateIngredient(req.params.idIngredient, {
+    const { ingredient } = await ingredientService.updateIngredient(req.params.idIngredient, {
       name: req.body.name,
       type: req.body.type
     });
 
-    response([data], 'OK', httpStatus.CREATED, res);
+    response(ingredient, 'OK', httpStatus.CREATED, res);
   } catch (error) {
     next(error);
   }
