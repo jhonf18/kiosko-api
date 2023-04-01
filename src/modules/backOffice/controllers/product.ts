@@ -95,7 +95,7 @@ export const createVariantController = async (req: Request, res: Response, next:
 
 export const createProductController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let data = await productManagmentService.createProduct({
+    const { product } = await productManagmentService.createProduct({
       name: req.body.name,
       mediaFiles: req.body.media_files,
       selectedIngredients: req.body.selected_ingredients,
@@ -107,7 +107,7 @@ export const createProductController = async (req: Request, res: Response, next:
       branchOffice: req.body.branch_office
     });
 
-    response([data], 'OK', httpStatus.CREATED, res);
+    response(product, 'OK', httpStatus.CREATED, res);
   } catch (error) {
     next(error);
   }
@@ -143,7 +143,7 @@ export const updateVariantController = async (req: Request, res: Response, next:
 
 export const updateProductController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let data = await productManagmentService.updateProduct(req.params.idProduct, {
+    const { product } = await productManagmentService.updateProduct(req.params.idProduct, {
       name: req.body.name,
       mediaFiles: req.body.media_files,
       price: req.body.price,
@@ -155,7 +155,7 @@ export const updateProductController = async (req: Request, res: Response, next:
       selectedIngredients: req.body.selected_ingredients
     });
 
-    response([data], 'OK', httpStatus.OK, res);
+    response(product, 'OK', httpStatus.OK, res);
   } catch (error) {
     next(error);
   }

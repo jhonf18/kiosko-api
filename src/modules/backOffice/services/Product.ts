@@ -37,7 +37,7 @@ export class ProductManagmentService {
       throw new ApiError('Not Found', httpStatus.NOT_FOUND, 'No se ha encontrado la sucursal con el id enviado', true);
 
     // Verify that the name category is Valid
-    const categoryStore = await this.productCategoryRepo.findOne({ name: productInput.category }, 'name subcategories');
+    const categoryStore = await this.productCategoryRepo.findOne({ id: productInput.category }, 'name subcategories');
     if (!categoryStore)
       throw new ApiError(
         'Not Found Category',
@@ -47,7 +47,7 @@ export class ProductManagmentService {
       );
 
     // Verify that subcategories is valid
-    if (typeof getIndexOfElmentInArray(categoryStore.subcategories, productInput.subcategory) === 'boolean')
+    if (!categoryStore.subcategories.includes(productInput.subcategory))
       throw new ApiError(
         'Not Found Subcategory',
         httpStatus.NOT_FOUND,
@@ -72,14 +72,16 @@ export class ProductManagmentService {
       media_files: productInput.mediaFiles || [],
       price: productInput.price,
       active: productInput.active,
-      category: productInput.category,
+      category: categoryStore.name,
       subcategory: productInput.subcategory,
       branch_office: productInput.branchOffice,
       selected_ingredients: productInput.selectedIngredients || [],
-      passage_sections: productInput.passageSections || [productInput.category]
+      passage_sections: productInput.passageSections || [categoryStore.name]
     });
 
-    return { product: deleteFields(productRecord) };
+    const productWithoutFieldsImportants = deleteFields(productRecord);
+
+    return { product: this.formatProductForSend([productWithoutFieldsImportants])[0] };
   }
 
   // TODO: Create filter for search in gets products
@@ -98,7 +100,8 @@ export class ProductManagmentService {
     getData = getData || '';
     const dataArray = getData.split(',');
     getData = dataArray.join(' ');
-    return await this.productRepo.find(filter, getData);
+    const products = (await this.productRepo.find(filter, getData)) as any;
+    return this.formatProductForSend(products);
   }
 
   public async deleteProduct(id: string) {
@@ -139,10 +142,7 @@ export class ProductManagmentService {
       throw new ApiError('Not Found', httpStatus.NOT_FOUND, 'No se ha encontrado la sucursal con el id enviado', true);
 
     // Verify that the name category is Valid
-    const categoryStore = await this.productCategoryRepo.findOne(
-      { name: updateProduct.category },
-      'name subcategories'
-    );
+    const categoryStore = await this.productCategoryRepo.findOne({ id: updateProduct.category }, 'name subcategories');
     if (!categoryStore)
       throw new ApiError(
         'Not Found Category',
@@ -175,14 +175,31 @@ export class ProductManagmentService {
         name: updateProduct.name,
         media_files: updateProduct.mediaFiles || [],
         price: updateProduct.price,
-        category: updateProduct.category,
+        category: categoryStore.name,
         subcategory: updateProduct.subcategory,
         branch_office: updateProduct.branchOffice,
         selected_ingredients: updateProduct.selectedIngredients || [],
-        passage_sections: updateProduct.passageSections || [updateProduct.category]
+        passage_sections: updateProduct.passageSections || [categoryStore.name]
       }
     );
 
-    return { product: productRecord };
+    return { product: this.formatProductForSend([productRecord])[0] };
+  }
+
+  private formatProductForSend(products: any[]) {
+    products = JSON.parse(JSON.stringify(products));
+    const productsForSend = products.map((e: any) => {
+      const ingredients = e.selected_ingredients.map((i: any) => {
+        if (i.quantity) {
+          return { ...i.ingredient, quantity: i.quantity };
+        } else {
+          return { ...i.ingredient };
+        }
+      });
+
+      return { ...e, selected_ingredients: ingredients };
+    });
+
+    return productsForSend;
   }
 }

@@ -1,10 +1,10 @@
+import { IngredientModel } from '../schemas/ingredients';
 import { ApiError } from './../../../config/errors/ApiError';
 import { httpStatus } from './../../../config/errors/httpStatusCodes';
 import { getObjectFromArray } from './../../../utilities/index';
 import { parameterizeSearchWithParams } from './../../utils/parameterizeSearchWithParams';
 import { IProduct, IUpdateProduct } from './../interfaces/IProduct';
 import { BranchOfficeModel } from './../schemas/branchOffice';
-import { DishVariantModel } from './../schemas/dishVariant';
 import { ProductModel } from './../schemas/product';
 import { BranchOfficeRepository } from './branchOffice';
 import { IngredientRepository } from './ingredient';
@@ -51,7 +51,11 @@ export class ProductRepository {
     const productStore = new this.productStore(product);
 
     try {
-      return await productStore.save();
+      const productRecord = await productStore.save();
+      return productRecord.populate([
+        { path: 'branch_office', model: BranchOfficeModel, select: 'id name address' },
+        { path: 'selected_ingredients.ingredient', model: IngredientModel, select: 'id name' }
+      ]);
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',
@@ -84,8 +88,9 @@ export class ProductRepository {
         for (let populate of parametrizationSearchParams.populateOneLevel) {
           if (populate.path === 'branch_office') {
             populate.model = BranchOfficeModel;
-          } else if (populate.path === 'variants') {
-            populate.model = DishVariantModel;
+          } else if (populate.path === 'selected_ingredients') {
+            populate.path = 'selected_ingredients.ingredient';
+            populate.model = IngredientModel;
           }
           populate.select += '-_id';
         }
@@ -130,10 +135,11 @@ export class ProductRepository {
         for (let populate of parametrizationSearchParams.populateOneLevel) {
           if (populate.path === 'branch_office') {
             populate.model = BranchOfficeModel;
-          } else if (populate.path === 'variants') {
-            populate.model = DishVariantModel;
+          } else if (populate.path === 'selected_ingredients') {
+            populate.path = 'selected_ingredients.ingredient';
+            populate.model = IngredientModel;
           }
-          populate.select += '-_id';
+          populate.select += ' -_id';
         }
 
         populate = parametrizationSearchParams.populateOneLevel;
@@ -199,9 +205,14 @@ export class ProductRepository {
     }
 
     try {
-      return await this.productStore.findOneAndUpdate(conditions, product, {
-        new: true
-      });
+      return await this.productStore
+        .findOneAndUpdate(conditions, product, {
+          new: true
+        })
+        .populate([
+          { path: 'branch_office', model: BranchOfficeModel, select: 'id name address' },
+          { path: 'selected_ingredients.ingredient', model: IngredientModel, select: 'id name' }
+        ]);
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',
