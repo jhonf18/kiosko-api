@@ -120,7 +120,7 @@ export class ProductManagmentService {
   public async updateProduct(id: string, updateProduct: IUpdateProductInput) {
     if (!id) throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'No se puede leer el ID', true);
 
-    const productStore = await this.productRepo.findOne({ id }, 'id');
+    const productStore = await this.productRepo.findOne({ id }, 'id media_files');
     if (!productStore)
       throw new ApiError('Not Found', httpStatus.NOT_FOUND, 'No se ha encontrado el producto a editar', true);
 
@@ -169,6 +169,9 @@ export class ProductManagmentService {
         true
       );
 
+    // TODO: Delete (update) images from cloudinary
+    if (updateProduct.mediaFiles.length === 0) updateProduct.mediaFiles = productStore.media_files || [];
+
     const productRecord = await this.productRepo.update(
       { id: productStore.id },
       {
@@ -196,6 +199,8 @@ export class ProductManagmentService {
           return { ...i.ingredient };
         }
       });
+
+      console.log(ingredients);
 
       return { ...e, selected_ingredients: ingredients };
     });

@@ -150,7 +150,7 @@ export const updateProductController = async (req: Request, res: Response, next:
       active: req.body.active,
       category: req.body.category,
       subcategory: req.body.subcategory,
-      branchOffice: req.body.branchOffice,
+      branchOffice: req.body.branch_office,
       passageSections: req.body.passage_sections,
       selectedIngredients: req.body.selected_ingredients
     });

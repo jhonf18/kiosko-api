@@ -136,6 +136,7 @@ export class ProductRepository {
           if (populate.path === 'branch_office') {
             populate.model = BranchOfficeModel;
           } else if (populate.path === 'selected_ingredients') {
+            getData += ' selected_ingredients.quantity';
             populate.path = 'selected_ingredients.ingredient';
             populate.model = IngredientModel;
           }
