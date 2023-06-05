@@ -1,4 +1,5 @@
 export interface ICreateOrderInput {
+  name: string;
   selectedProducts: Array<ISelectedProductInput>;
   comments?: string;
   totalPrice: number;

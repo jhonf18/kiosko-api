@@ -21,6 +21,10 @@ export class OrderService {
   ) {}
 
   public async createOrder(order: ICreateOrderInput) {
+    console.log(order);
+    if (!order.name)
+      throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'Debes ingresar el nombre de la orden.', true);
+
     if (!order.totalPrice)
       throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'Debes ingresar el precio total de la orden.', true);
 
@@ -50,6 +54,7 @@ export class OrderService {
     // Create order
     const data = await this.orderRepo.saveOrderAndGenerateTickets({
       id: uuid4(),
+      name: order.name,
       selected_products: order.selectedProducts,
       comments: order.comments,
       total_price: order.totalPrice,

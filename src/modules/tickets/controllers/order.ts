@@ -6,6 +6,7 @@ import { orderService } from './../dependencyInjectorTickets';
 export const createOrderController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let data = await orderService.createOrder({
+      name: req.body.name,
       selectedProducts: req.body.selected_products,
       totalPrice: req.body.total_price,
       isOpen: req.body.is_open,
@@ -14,7 +15,7 @@ export const createOrderController = async (req: Request, res: Response, next: N
       waiter: res.locals.userID
     });
 
-    response([data], 'OK', httpStatus.CREATED, res);
+    response(data, 'OK', httpStatus.CREATED, res);
   } catch (error) {
     next(error);
   }

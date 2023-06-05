@@ -25,6 +25,9 @@ export class OrderSchema {
     comments: string;
   }>;
 
+  @prop({ type: () => String, required: true })
+  name: string;
+
   @prop({ type: () => String })
   comments?: string;
 

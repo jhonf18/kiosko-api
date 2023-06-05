@@ -121,7 +121,7 @@ export class ProductRepository {
    * @param {boolean} [getKeyID] - boolean
    * @returns The result of the query.
    */
-  public async find(conditions?: Object | null, getData?: string, getKeyID?: boolean) {
+  public async find(conditions?: any | null, getData?: string, getKeyID?: boolean) {
     conditions = conditions || {};
     let populate = [];
 
@@ -147,6 +147,16 @@ export class ProductRepository {
       }
     } else {
       getData = '';
+    }
+
+    // If client filter with branch office then should search _id of branchOffice and add to object of search.
+    if (conditions.hasOwnProperty('branch_office')) {
+      if (conditions.branch_office.length > 1) {
+        const branchOffice = await this.branchOfficeRepo.findOne({ id: conditions.branch_office }, '_id id', true);
+        conditions.branch_office = branchOffice?._id;
+      } else {
+        delete conditions.waiter;
+      }
     }
 
     try {

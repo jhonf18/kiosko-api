@@ -1,5 +1,6 @@
 export interface IOrder {
   id: string;
+  name: String;
   selected_products: Array<ISelectedProduct>;
   comments?: string;
   total_price: number;
