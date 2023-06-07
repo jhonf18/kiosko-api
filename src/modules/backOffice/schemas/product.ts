@@ -45,10 +45,10 @@ export class ProductSchema {
     quatity?: number;
   }>;
 
-  @prop({ default: Date.now(), type: () => Date })
+  @prop({ default: Date.now, type: () => Date })
   created_at: Date;
 
-  @prop({ default: Date.now(), type: () => Date })
+  @prop({ default: Date.now, type: () => Date })
   updated_at: Date;
 }
 

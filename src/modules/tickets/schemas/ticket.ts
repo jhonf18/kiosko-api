@@ -31,13 +31,13 @@ export class TicketSchema {
   @prop({ type: () => Boolean, default: false })
   finished: Boolean;
 
-  @prop({ default: Date.now(), type: () => Date })
+  @prop({ default: Date.now, type: () => Date })
   created_at: Date;
 
-  @prop({ default: Date.now(), type: () => Date })
+  @prop({ default: Date.now, type: () => Date })
   updated_at: Date;
 
-  @prop({ default: Date.now(), type: () => Date, expires: '2d' })
+  @prop({ default: Date.now, type: () => Date, expires: '2d' })
   expires_at: Date;
 }
 

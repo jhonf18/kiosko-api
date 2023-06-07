@@ -37,10 +37,10 @@ export class UserSchema {
   active?: boolean;
 
   // Timestamps
-  @prop({ default: Date.now(), type: () => Date })
+  @prop({ default: Date.now, type: () => Date })
   created_at: Date;
 
-  @prop({ default: Date.now(), type: () => Date })
+  @prop({ default: Date.now, type: () => Date })
   updated_at: Date;
 }
 

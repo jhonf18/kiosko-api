@@ -21,7 +21,6 @@ export class OrderService {
   ) {}
 
   public async createOrder(order: ICreateOrderInput) {
-    console.log(order);
     if (!order.name)
       throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'Debes ingresar el nombre de la orden.', true);
 
@@ -98,14 +97,18 @@ export class OrderService {
       delete filter.sort_by;
     }
 
-    let orders = (await this.orderRepo.find(filter, getData)) as any;
+    let orders = (await this.orderRepo.find(filter, getData, true)) as any;
 
     orders = JSON.parse(JSON.stringify(orders));
 
     // TODO: Verificar el envio de datos con productos sin ingredientes como bebidas
 
     for (let i = 0; i < orders.length; i++) {
-      const order = orders[i];
+      let order = orders[i];
+      order.tickets = await this.ticketService.getTickets(
+        { order: order._id },
+        'id,sections,product,comments,product.name,product.id,product.ingredients,date_accepted,date_finished'
+      );
       if (order.selected_products) {
         const selectedProducts = order.selected_products as any[];
         let selectedProductsReponse = [];
@@ -146,14 +149,15 @@ export class OrderService {
             });
             selectedProductResponse.ingredients.push(...ingredientsResponse);
           }
+          console.log(selectedProduct);
+          selectedProductResponse.ticket_id = selectedProduct.ticket_id;
 
-          // selectedProduct = selectedProductResponse;
           selectedProductsReponse.push(selectedProductResponse);
           delete selectedProductResponse.selected_ingredients;
-          // delete selectedProduct.selected_ingredients;
         }
 
         order.selected_products = selectedProductsReponse;
+        delete order._id;
       }
     }
 

@@ -45,7 +45,7 @@ routesOrder.put(
 );
 
 // Get all orders (Obtener todas las ordenes del día)
-routesOrder.get('/orders', new MiddlewareAuthentication([ROLES.LEADER, ROLES.ADMIN]).verifyToken, getOrdersController);
+routesOrder.get('/orders', new MiddlewareAuthentication([ROLES.WAITER, ROLES.LEADER, ROLES.ADMIN]).verifyToken, getOrdersController);
 
 // Delete order (Eliminar una orden que no fue finalizada, si esto sucede
 // se deberá enviar un mensaje a las secciones encargadas y eliminar el ticket

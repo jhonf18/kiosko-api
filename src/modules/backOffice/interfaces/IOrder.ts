@@ -10,6 +10,7 @@ export interface IOrder {
 }
 
 export interface ISelectedProduct {
+  ticket_id?: string;
   product: string;
   ids_selected_ingredients?: Array<string>;
   comments?: string;

@@ -44,10 +44,12 @@ export class OrderRepository {
     let tickets: any[] = [];
     if (order.selected_products.length > 0) {
       const selectedProductsToSave = (await this.preparateProductsToSave(
-        order.selected_products
-      )) as ISelectedProduct[];
-      order.selected_products = selectedProductsToSave;
-      tickets = this.preparateTicketsForSave(order.selected_products, orderStore._id, branchOfficeStore?._id);
+        order.selected_products,
+        orderStore._id,
+        branchOfficeStore?._id
+      )) as { products: ISelectedProduct[]; tickets: any[] };
+      order.selected_products = selectedProductsToSave.products;
+      tickets = selectedProductsToSave.tickets;
     }
 
     const ticketsRecord = await this.ticketRepo.saveMany(tickets);
@@ -90,7 +92,8 @@ export class OrderRepository {
             populate.path = 'selected_products.product';
             populate.model = ProductModel;
 
-            getData += ' selected_products.ids_selected_ingredients selected_products.comments';
+            getData +=
+              ' selected_products.ids_selected_ingredients selected_products.comments selected_products.ticket_id';
 
             if (populate.select.split(' ').includes('ingredients')) {
               populate.select += ' selected_ingredients selected_ingredients.ingredient selected_ingredients.quantity';
@@ -170,21 +173,23 @@ export class OrderRepository {
 
     // Add products to order
     if (orderUpdate.added_products && orderUpdate.added_products.length > 0) {
-      const addedProductsForSave = (await this.preparateProductsToSave(orderUpdate.added_products, true)) as {
-        selectedProductsToSave: Array<ISelectedProduct>;
+      const addedProductsForSave = (await this.preparateProductsToSave(
+        orderUpdate.added_products,
+        orderStoreDB._id,
+        orderStoreDB.branch_office,
+        true
+      )) as {
+        products: Array<ISelectedProduct>;
         totalPrice: number;
+        tickets: any[];
       };
       // Create tickets
       //
       orderUpdateForDB.$push = {
-        selected_products: { $each: addedProductsForSave.selectedProductsToSave }
+        selected_products: { $each: addedProductsForSave.products }
       };
 
-      tickets = this.preparateTicketsForSave(
-        addedProductsForSave.selectedProductsToSave,
-        orderStoreDB._id,
-        orderStoreDB.branch_office
-      );
+      tickets = addedProductsForSave.tickets;
       orderUpdateForDB.total_price = orderStoreDB.total_price + addedProductsForSave.totalPrice;
     }
 
@@ -259,8 +264,13 @@ export class OrderRepository {
    */
   private async preparateProductsToSave(
     products: Array<ISelectedProduct>,
+    orderIDKey: any,
+    branchOfficeID: any,
     getPriceProduct?: boolean
-  ): Promise<Array<ISelectedProduct> | { selectedProductsToSave: Array<ISelectedProduct>; totalPrice: number }> {
+  ): Promise<
+    | { products: Array<ISelectedProduct>; tickets: Array<any> }
+    | { products: Array<ISelectedProduct>; totalPrice: number; tickets: Array<any> }
+  > {
     const productsIDS = products.map(selected => selected.product);
 
     const productsStore = !getPriceProduct
@@ -269,6 +279,7 @@ export class OrderRepository {
 
     // TODO: Verificar que los Ids de los ingredientes existan
     let totalPrice = 0;
+    let tickets: any[] = [];
 
     const selectedProductsToSave = products.map(selected => {
       const productStore = productsStore.find(el => el.id === selected.product) as {
@@ -284,13 +295,26 @@ export class OrderRepository {
 
       if (getPriceProduct && productStore.price) totalPrice += productStore.price;
 
+      if (orderIDKey && branchOfficeID && result.passage_sections[0] !== 'BEBIDAS') {
+        result.ticket_id = uuidv4();
+        tickets.push({
+          id: result.ticket_id,
+          product: result.product,
+          ingredients: result.ids_selected_ingredients,
+          sections: result.passage_sections,
+          comments: result.comments || '',
+          order: orderIDKey,
+          branch_office: branchOfficeID
+        });
+      }
+
       return result;
     });
 
     if (getPriceProduct) {
-      return { selectedProductsToSave, totalPrice };
+      return { products: selectedProductsToSave, totalPrice, tickets };
     } else {
-      return selectedProductsToSave;
+      return { products: selectedProductsToSave, tickets };
     }
   }
 
@@ -301,25 +325,25 @@ export class OrderRepository {
    * @param {any} branchOfficeID - The ID of the branch office where the order was made.
    * @returns An array of objects.
    */
-  private preparateTicketsForSave(products: Array<any>, orderIDKey: any, branchOfficeID: any) {
-    let tickets = [];
+  // private preparateTicketsForSave(products: Array<any>, orderIDKey: any, branchOfficeID: any) {
+  //   let tickets = [];
 
-    for (const product of products) {
-      if (product.passage_sections[0] === 'BEBIDAS') continue;
+  //   for (const product of products) {
+  //     if (product.passage_sections[0] === 'BEBIDAS') continue;
 
-      tickets.push({
-        id: uuidv4(),
-        product: product.product,
-        ingredients: product.ids_selected_ingredients,
-        sections: product.passage_sections,
-        comments: product.comments || '',
-        order: orderIDKey,
-        branch_office: branchOfficeID
-      });
+  //     tickets.push({
+  //       id: uuidv4(),
+  //       product: product.product,
+  //       ingredients: product.ids_selected_ingredients,
+  //       sections: product.passage_sections,
+  //       comments: product.comments || '',
+  //       order: orderIDKey,
+  //       branch_office: branchOfficeID
+  //     });
 
-      delete product.passage_sections;
-    }
+  //     delete product.passage_sections;
+  //   }
 
-    return tickets;
-  }
+  //   return tickets;
+  // }
 }
