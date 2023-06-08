@@ -128,7 +128,6 @@ export class TicketRepository {
         }
 
         populate = parametrizationSearchParams.populateOneLevel;
-        console.log('🚀 ~ file: ticket.ts:124 ~ TicketRepository ~ find ~ populate:', populate);
       }
     } else {
       getData = '';

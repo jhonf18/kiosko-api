@@ -112,6 +112,8 @@ export class OrderService {
       if (order.selected_products) {
         const selectedProducts = order.selected_products as any[];
         let selectedProductsReponse = [];
+
+        // If exists products in order
         for (let selectedProduct of selectedProducts) {
           let selectedProductResponse: any = {};
           Object.assign(selectedProductResponse, selectedProduct.product);
@@ -149,9 +151,17 @@ export class OrderService {
             });
             selectedProductResponse.ingredients.push(...ingredientsResponse);
           }
-          console.log(selectedProduct);
+          console.log(selectedProduct.product.selected_ingredients);
           selectedProductResponse.ticket_id = selectedProduct.ticket_id;
 
+          selectedProductResponse.all_ingredients = selectedProduct.product.selected_ingredients.map(
+            (ingredientObj: any) => {
+              return {
+                ...ingredientObj.ingredient,
+                ...(ingredientObj.quantity && { quantity: ingredientObj.quantity })
+              };
+            }
+          );
           selectedProductsReponse.push(selectedProductResponse);
           delete selectedProductResponse.selected_ingredients;
         }
@@ -212,9 +222,18 @@ export class OrderService {
         true
       );
 
-    const result = await this.orderRepo.update({ id: orderID }, { added_products: products }, orderStore);
+    const result = (await this.orderRepo.update({ id: orderID }, { added_products: products }, orderStore)) as any;
 
-    return { order: result };
+    let ticketsIDS: any[] = result?.tickets.map((ticket: any) => ({ id: ticket.id }));
+
+    const tickets = await this.ticketService.getTickets(
+      { $or: ticketsIDS },
+      'id,sections,comments,product.name,product.price,product.ingredients'
+    );
+
+    let response = JSON.parse(JSON.stringify(result));
+    response.tickets = tickets;
+    return response;
   }
 
   public async deleteProductToOrder(orderID: string, dataForDeleteProduct: { productID: string; comments: string }) {
@@ -383,8 +402,6 @@ export class OrderService {
 
     const newComment = `${uuidThisProduct}::${comment}`;
 
-    console.log(orderStore);
-
     const indexProductObj = orderStore.selected_products.findIndex(el => {
       const uuid = el.comments.split('::')[0];
       return uuid === uuidThisProduct;
@@ -398,6 +415,7 @@ export class OrderService {
         true
       );
 
+    let ticketStore;
     if (productStore.passage_sections.includes('COCINA') || productStore.passage_sections.includes('HORNO')) {
       const tickets = await this.ticketRepo.find(
         { product: productStore.id, order: orderStore._id },
@@ -440,6 +458,11 @@ export class OrderService {
               'Ha ocurrido un error inesperado al actualizar el ticket.',
               true
             );
+
+          ticketStore = await this.ticketRepo.find(
+            { _id: ticketForThisProduct._id },
+            'id sections product comments product.name product.id product.ingredients'
+          );
         }
       }
     }
@@ -454,6 +477,71 @@ export class OrderService {
       { selected_products: orderStore.selected_products as any }
     );
 
-    return { order: result };
+    ticketStore = JSON.parse(JSON.stringify(ticketStore));
+
+    // TODO: Refactor code
+    if (ticketStore) {
+      console.log(ticketStore[0]);
+      for (const ticket of ticketStore) {
+        // If the array of variants exists, only the one that was selected will be chosen to be sent to the client
+        // If the customer selected some ingredients of the product or edited it and there are ingredients and get ingredients of products.
+        let ingredientsResponse = [];
+        if (
+          ticket.product &&
+          ticket.ingredients &&
+          ticket.ingredients.length > 0 &&
+          ticket.product.selected_ingredients &&
+          ticket.product.selected_ingredients.length > 0
+        ) {
+          // We should select the ingredients of ticket.product.selected_ingredients array such that coincide with those of the ticket.ingredients
+          for (const ingredientID of ticket.ingredients) {
+            let ingredientResponse: any = {};
+            const ingredient = ticket.product.selected_ingredients.find((el: any) => el.ingredient.id === ingredientID);
+            Object.assign(ingredientResponse, ingredient.ingredient);
+            if (ingredient.quantity) {
+              ingredientResponse.quantity = ingredient.quantity;
+            }
+            ingredientsResponse.push(ingredientResponse);
+          }
+        }
+        // -if the client select all ingredients of the product
+        else if (
+          ticket.product &&
+          ticket.product.selected_ingredients &&
+          ticket.product.selected_ingredients.length > 0
+        ) {
+          const ingredientsResponse = ticket.product.selected_ingredients.map((ingredient: any) => {
+            let ingredientResponse: any = {};
+            Object.assign(ingredientResponse, ingredient.ingredient);
+            if (ingredient.quantity) {
+              ingredientResponse.quantity = ingredient.quantity;
+            }
+            return ingredientResponse;
+          });
+          ingredientsResponse.push(...ingredientsResponse);
+        }
+
+        if (ingredientsResponse.length > 0) {
+          ticket.product.ingredients = ingredientsResponse;
+          ticket.has_ingredients = true;
+        }
+
+        if (ingredientsResponse.length === 0) {
+          ticket.has_ingredients = false;
+        }
+
+        // We eliminate the fields that are not necessary for the client
+        delete ticket.ingredients;
+        delete ticket.product.selected_ingredients;
+
+        if (ticket.order && ticket.order.waiter) {
+          ticket.waiter = ticket.order.waiter;
+          delete ticket.order.waiter;
+        }
+      }
+      return { order: result, ticket: ticketStore[0] };
+    } else {
+      return { order: result };
+    }
   }
 }

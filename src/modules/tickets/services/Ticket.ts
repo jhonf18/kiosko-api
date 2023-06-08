@@ -103,7 +103,7 @@ export class TicketService {
 
     return tickets;
   }
-
+  // TODO: Evit change status to accept when the ticket is finished or accepted
   public async changeStatusTicket(id: string, stateOfTicket: string) {
     if (!id) throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'No se puede leer el ID', true);
 

@@ -61,7 +61,7 @@ export const addProductsToOrderController = async (req: Request, res: Response, 
   try {
     let data = await orderService.addProductsToOrder(req.params.idOrder, req.body.selected_products);
 
-    response([data], 'OK', httpStatus.OK, res);
+    response(data, 'OK', httpStatus.OK, res);
   } catch (error) {
     next(error);
   }
@@ -92,7 +92,7 @@ export const updateCommentOrIngredientsOfAProductOfOrderController = async (
       ingredients: req.body.product_ingredients
     });
 
-    response([data], 'OK', httpStatus.OK, res);
+    response(data, 'OK', httpStatus.OK, res);
   } catch (error) {
     next(error);
   }
