@@ -88,7 +88,7 @@ export class UserRepository {
     }
   }
 
-  public async getUsers(filter: Object, getData?: string, getFullData?: boolean) {
+  public async getUsers(filter: any, getData?: string, getFullData?: boolean) {
     let populate = [];
 
     if (!getFullData && getData) {
@@ -107,6 +107,16 @@ export class UserRepository {
       }
     } else {
       getData = '-_id -__v';
+    }
+
+    if (filter.hasOwnProperty('branch_office')) {
+      const branchOfficeStore = await this.branchOfficeStore.findOne({ id: filter.branch_office }, '_id');
+
+      if (branchOfficeStore) {
+        filter.branch_office = branchOfficeStore._id;
+      } else {
+        delete filter.branch_office;
+      }
     }
 
     try {
