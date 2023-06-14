@@ -49,9 +49,9 @@ export const deleteOrderController = async (req: Request, res: Response, next: N
 
 export const changeOrderStatusController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let data = await orderService.changeStatusOfOrder(req.params.idOrder, req.body.is_open);
+    const { order } = await orderService.changeStatusOfOrder(req.params.idOrder, req.body.is_open);
 
-    response([data], 'OK', httpStatus.OK, res);
+    response(order, 'OK', httpStatus.OK, res);
   } catch (error) {
     next(error);
   }
@@ -74,7 +74,7 @@ export const deleteProductOfOrderController = async (req: Request, res: Response
       comments: req.body.product_comments
     });
 
-    response([data], 'OK', httpStatus.OK, res);
+    response(data, 'OK', httpStatus.OK, res);
   } catch (error) {
     next(error);
   }

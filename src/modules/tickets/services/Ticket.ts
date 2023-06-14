@@ -129,6 +129,12 @@ export class TicketService {
       );
 
     const ticketUpdated = await this.ticketRepo.updateOne({ id }, udpateObject);
-    return { ticket: ticketUpdated };
+
+    const response = await this.ticketRepo.find(
+      { _id: ticketUpdated?._id },
+      'id product.name product.id product.price product.ingredients ingredients selected_products.id'
+    );
+
+    return response[0];
   }
 }

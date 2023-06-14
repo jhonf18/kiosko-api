@@ -23,7 +23,7 @@ export const changeStateTicketController = async (req: Request, res: Response, n
   try {
     let data = await ticketService.changeStatusTicket(req.params.idTicket, req.body.state);
 
-    response([data], 'OK', httpStatus.CREATED, res);
+    response(data, 'OK', httpStatus.CREATED, res);
   } catch (error) {
     next(error);
   }

@@ -66,7 +66,7 @@ export class OrderService {
 
     const tickets = await this.ticketService.getTickets(
       { $or: ticketsIDS },
-      'id,sections,comments,product.name,product.price,product.ingredients'
+      'id,sections,comments,product.name,product.price,product.ingredients,product.id'
     );
 
     let response = JSON.parse(JSON.stringify(data));

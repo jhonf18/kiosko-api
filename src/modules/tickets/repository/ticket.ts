@@ -85,6 +85,7 @@ export class TicketRepository {
       getData = parametrizationSearchParams.select;
 
       if (parametrizationSearchParams.populateOneLevel.length > 0) {
+        console.log(parametrizationSearchParams.populateOneLevel);
         for (let populate of parametrizationSearchParams.populateOneLevel) {
           if (populate.path === 'product') {
             populate.model = ProductModel;
@@ -101,6 +102,24 @@ export class TicketRepository {
             }
           } else if (populate.path === 'order') {
             populate.model = OrderModel;
+          } else if (populate.path === 'selected_products') {
+            console.log('hereee');
+
+            populate.path = 'order';
+            populate.model = OrderModel;
+            populate.select += ' selected_products id';
+
+            populate.populate = {
+              path: 'selected_products.product',
+              model: ProductModel,
+              select: 'id'
+            };
+
+            console.log(populate);
+
+            // populate.path = 'order.selected_products.product';
+            // populate.model = ProductModel;
+            // populate.select += 'id';
           } else if (populate.path === 'waiter') {
             let index = -1;
             const orderPopulate = parametrizationSearchParams.populateOneLevel.find((popu, indexFinded) => {
