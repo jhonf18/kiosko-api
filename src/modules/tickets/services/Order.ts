@@ -70,7 +70,69 @@ export class OrderService {
     );
 
     let response = JSON.parse(JSON.stringify(data));
+
     response.tickets = tickets;
+
+    if (response.order.selected_products) {
+      const selectedProducts = response.order.selected_products as any[];
+      let selectedProductsReponse = [];
+
+      // If exists products in order
+      for (let selectedProduct of selectedProducts) {
+        let selectedProductResponse: any = {};
+        Object.assign(selectedProductResponse, selectedProduct.product);
+        selectedProductResponse.comments = selectedProduct.comments || null;
+
+        if (
+          selectedProduct.ids_selected_ingredients &&
+          selectedProduct.ids_selected_ingredients.length > 0 &&
+          selectedProduct.product.selected_ingredients
+        ) {
+          selectedProductResponse.ingredients = [];
+
+          for (const ingredientId of selectedProduct.ids_selected_ingredients) {
+            const ingredient = selectedProduct.product.selected_ingredients.find(
+              (ingredient: any) => ingredient.ingredient.id === ingredientId
+            );
+            if (ingredient) {
+              let ingredientResponse: any = {};
+              Object.assign(ingredientResponse, ingredient.ingredient);
+              if (ingredient.quantity) {
+                ingredientResponse.quantity = ingredient.quantity;
+              }
+              selectedProductResponse.ingredients.push(ingredientResponse);
+            }
+          }
+        } else if (selectedProduct.product.selected_ingredients) {
+          selectedProductResponse.ingredients = [];
+          const ingredientsResponse = selectedProduct.product.selected_ingredients.map((ingredient: any) => {
+            let ingredientResponse: any = {};
+            Object.assign(ingredientResponse, ingredient.ingredient);
+            if (ingredient.quantity) {
+              ingredientResponse.quantity = ingredient.quantity;
+            }
+            return ingredientResponse;
+          });
+          selectedProductResponse.ingredients.push(...ingredientsResponse);
+        }
+        selectedProductResponse.ticket_id = selectedProduct.ticket_id;
+
+        selectedProductResponse.all_ingredients = selectedProduct.product.selected_ingredients.map(
+          (ingredientObj: any) => {
+            return {
+              ...ingredientObj.ingredient,
+              ...(ingredientObj.quantity && { quantity: ingredientObj.quantity })
+            };
+          }
+        );
+        selectedProductsReponse.push(selectedProductResponse);
+        delete selectedProductResponse.selected_ingredients;
+      }
+
+      response.order.selected_products = selectedProductsReponse;
+      delete response.order._id;
+    }
+
     return response;
   }
 
@@ -151,7 +213,6 @@ export class OrderService {
             });
             selectedProductResponse.ingredients.push(...ingredientsResponse);
           }
-          console.log(selectedProduct.product.selected_ingredients);
           selectedProductResponse.ticket_id = selectedProduct.ticket_id;
 
           selectedProductResponse.all_ingredients = selectedProduct.product.selected_ingredients.map(
@@ -231,8 +292,76 @@ export class OrderService {
       'id,sections,comments,product.name,product.price,product.ingredients'
     );
 
-    let response = JSON.parse(JSON.stringify(result));
+    const resp = await this.orderRepo.find(
+      { id: orderID },
+      'id name created_at waiter.id is_open total_price waiter.name waiter.nickname selected_products.id selected_products.name selected_products.price selected_products.media_files selected_products.selected_ingredients',
+      true
+    );
+
+    let response: any = {};
+    response.order = JSON.parse(JSON.stringify(resp[0]));
     response.tickets = tickets;
+
+    if (response.order.selected_products) {
+      const selectedProducts = response.order.selected_products as any[];
+      let selectedProductsReponse = [];
+
+      // If exists products in order
+      for (let selectedProduct of selectedProducts) {
+        let selectedProductResponse: any = {};
+        Object.assign(selectedProductResponse, selectedProduct.product);
+        selectedProductResponse.comments = selectedProduct.comments || null;
+
+        if (
+          selectedProduct.ids_selected_ingredients &&
+          selectedProduct.ids_selected_ingredients.length > 0 &&
+          selectedProduct.product.selected_ingredients
+        ) {
+          selectedProductResponse.ingredients = [];
+
+          for (const ingredientId of selectedProduct.ids_selected_ingredients) {
+            const ingredient = selectedProduct.product.selected_ingredients.find(
+              (ingredient: any) => ingredient.ingredient.id === ingredientId
+            );
+            if (ingredient) {
+              let ingredientResponse: any = {};
+              Object.assign(ingredientResponse, ingredient.ingredient);
+              if (ingredient.quantity) {
+                ingredientResponse.quantity = ingredient.quantity;
+              }
+              selectedProductResponse.ingredients.push(ingredientResponse);
+            }
+          }
+        } else if (selectedProduct.product.selected_ingredients) {
+          selectedProductResponse.ingredients = [];
+          const ingredientsResponse = selectedProduct.product.selected_ingredients.map((ingredient: any) => {
+            let ingredientResponse: any = {};
+            Object.assign(ingredientResponse, ingredient.ingredient);
+            if (ingredient.quantity) {
+              ingredientResponse.quantity = ingredient.quantity;
+            }
+            return ingredientResponse;
+          });
+          selectedProductResponse.ingredients.push(...ingredientsResponse);
+        }
+        selectedProductResponse.ticket_id = selectedProduct.ticket_id;
+
+        selectedProductResponse.all_ingredients = selectedProduct.product.selected_ingredients.map(
+          (ingredientObj: any) => {
+            return {
+              ...ingredientObj.ingredient,
+              ...(ingredientObj.quantity && { quantity: ingredientObj.quantity })
+            };
+          }
+        );
+        selectedProductsReponse.push(selectedProductResponse);
+        delete selectedProductResponse.selected_ingredients;
+      }
+
+      response.order.selected_products = selectedProductsReponse;
+      delete response.order._id;
+    }
+
     return response;
   }
 
@@ -481,7 +610,6 @@ export class OrderService {
 
     // TODO: Refactor code
     if (ticketStore) {
-      console.log(ticketStore[0]);
       for (const ticket of ticketStore) {
         // If the array of variants exists, only the one that was selected will be chosen to be sent to the client
         // If the customer selected some ingredients of the product or edited it and there are ingredients and get ingredients of products.

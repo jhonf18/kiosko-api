@@ -56,7 +56,13 @@ export class OrderRepository {
 
     try {
       const orderRecord = await orderStore.save();
-      return { order: orderRecord, tickets: ticketsRecord };
+      const orderToSend = await this.find(
+        { _id: orderRecord._id },
+        'id name created_at waiter.id is_open total_price waiter.name waiter.nickname selected_products.id selected_products.name selected_products.price selected_products.media_files selected_products.selected_ingredients',
+        true
+      );
+
+      return { order: orderToSend[0], tickets: ticketsRecord };
     } catch (error: any) {
       throw new ApiError(
         'Internal Error',
