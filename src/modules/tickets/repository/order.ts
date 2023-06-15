@@ -244,24 +244,6 @@ export class OrderRepository {
     }
   }
 
-  // public async findOrdersByBranchOfficeIDAndProductID(conditions: { branch_office: string; product_id: string }) {
-  //   const productStorePromise = this.productRepo.findOne({ id: conditions.product_id }, '_id');
-  //   const branchOfficeStorePromise = this.branchOfficeRepo.findOne({ id: conditions.branch_office }, '_id');
-
-  //   const [productStore, branchOfficeStore] = await Promise.all([productStorePromise, branchOfficeStorePromise]);
-
-  //   if (!branchOfficeStore)
-  //     throw new ApiError('Not Found Branch Office', httpStatus.NOT_FOUND, 'No se ha encontrado la sucursal.', true);
-
-  //   if (!productStore)
-  //     throw new ApiError('Not Found Branch Office', httpStatus.NOT_FOUND, 'No se ha encontrado el producto.', true);
-
-  //   const searchParams = {
-  //     product: productStore._id,
-  //     branch_office:
-  //   }
-  // }
-
   /**
    * It takes an array of objects with a product property, and returns an array of objects with the changes product id by
    * _id, and add property passage_sections because it is necessary for create tickets
@@ -323,33 +305,4 @@ export class OrderRepository {
       return { products: selectedProductsToSave, tickets };
     }
   }
-
-  /**
-   * It takes an array of products, an order ID and a branch office ID and returns an array of tickets
-   * @param products - Array<any>
-   * @param {any} orderIDKey - The ID of the order that is being created.
-   * @param {any} branchOfficeID - The ID of the branch office where the order was made.
-   * @returns An array of objects.
-   */
-  // private preparateTicketsForSave(products: Array<any>, orderIDKey: any, branchOfficeID: any) {
-  //   let tickets = [];
-
-  //   for (const product of products) {
-  //     if (product.passage_sections[0] === 'BEBIDAS') continue;
-
-  //     tickets.push({
-  //       id: uuidv4(),
-  //       product: product.product,
-  //       ingredients: product.ids_selected_ingredients,
-  //       sections: product.passage_sections,
-  //       comments: product.comments || '',
-  //       order: orderIDKey,
-  //       branch_office: branchOfficeID
-  //     });
-
-  //     delete product.passage_sections;
-  //   }
-
-  //   return tickets;
-  // }
 }

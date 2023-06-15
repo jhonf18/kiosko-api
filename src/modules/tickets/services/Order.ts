@@ -62,16 +62,18 @@ export class OrderService {
       waiter: order.waiter
     });
 
-    let ticketsIDS: any[] = data.tickets.map((ticket: any) => ({ id: ticket.id }));
-
-    const tickets = await this.ticketService.getTickets(
-      { $or: ticketsIDS },
-      'id,sections,comments,product.name,product.price,product.ingredients,product.id'
-    );
-
     let response = JSON.parse(JSON.stringify(data));
+    if (data.tickets && data.tickets.length > 0) {
+      let ticketsIDS: any[] = data.tickets.map((ticket: any) => ({ id: ticket.id }));
 
-    response.tickets = tickets;
+      const tickets = await this.ticketService.getTickets(
+        { $or: ticketsIDS },
+        'id,sections,comments,product.name,product.price,product.ingredients,product.id'
+      );
+      response.tickets = tickets;
+    } else {
+      response.tickets = [];
+    }
 
     if (response.order.selected_products) {
       const selectedProducts = response.order.selected_products as any[];
@@ -285,13 +287,6 @@ export class OrderService {
 
     const result = (await this.orderRepo.update({ id: orderID }, { added_products: products }, orderStore)) as any;
 
-    let ticketsIDS: any[] = result?.tickets.map((ticket: any) => ({ id: ticket.id }));
-
-    const tickets = await this.ticketService.getTickets(
-      { $or: ticketsIDS },
-      'id,sections,comments,product.name,product.price,product.ingredients'
-    );
-
     const resp = await this.orderRepo.find(
       { id: orderID },
       'id name created_at waiter.id is_open total_price waiter.name waiter.nickname selected_products.id selected_products.name selected_products.price selected_products.media_files selected_products.selected_ingredients',
@@ -300,7 +295,19 @@ export class OrderService {
 
     let response: any = {};
     response.order = JSON.parse(JSON.stringify(resp[0]));
-    response.tickets = tickets;
+
+    if (result.tickets && result.tickets.length > 0) {
+      let ticketsIDS: any[] = result?.tickets.map((ticket: any) => ({ id: ticket.id }));
+
+      const tickets = await this.ticketService.getTickets(
+        { $or: ticketsIDS },
+        'id,sections,comments,product.name,product.price,product.ingredients'
+      );
+
+      response.tickets = tickets;
+    } else {
+      response.tickets = [];
+    }
 
     if (response.order.selected_products) {
       const selectedProducts = response.order.selected_products as any[];
@@ -479,7 +486,8 @@ export class OrderService {
     const productsOKForsave = orderStore.selected_products.map((el: any) => ({
       product: el.product._id,
       comments: el.comments,
-      ids_selected_ingredients: el.ids_selected_ingredients
+      ids_selected_ingredients: el.ids_selected_ingredients,
+      ticket_id: el.ticket_id
     }));
 
     const result = await this.orderRepo.update(
