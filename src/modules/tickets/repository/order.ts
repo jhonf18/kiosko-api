@@ -58,7 +58,7 @@ export class OrderRepository {
       const orderRecord = await orderStore.save();
       const orderToSend = await this.find(
         { _id: orderRecord._id },
-        'id name created_at waiter.id is_open total_price waiter.name waiter.nickname selected_products.id selected_products.name selected_products.price selected_products.media_files selected_products.selected_ingredients',
+        'id name created_at waiter.id is_open branch_office.id total_price waiter.name waiter.nickname selected_products.id selected_products.name selected_products.price selected_products.media_files selected_products.selected_ingredients',
         true
       );
 
@@ -131,6 +131,15 @@ export class OrderRepository {
         conditions.waiter = waiterStore?._id;
       } else {
         delete conditions.waiter;
+      }
+    }
+
+    if (conditions.hasOwnProperty('branch_office')) {
+      if (conditions.branch_office.length > 1) {
+        const branchOfficeStore = await this.branchOfficeRepo.findOne({ id: conditions.branch_office }, '_id id', true);
+        conditions.branch_office = branchOfficeStore?._id;
+      } else {
+        delete conditions.branch_office;
       }
     }
 

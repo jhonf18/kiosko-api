@@ -54,7 +54,7 @@ export class ProductRepository {
       const productRecord = await productStore.save();
       return productRecord.populate([
         { path: 'branch_office', model: BranchOfficeModel, select: 'id name address' },
-        { path: 'selected_ingredients.ingredient', model: IngredientModel, select: 'id name' }
+        { path: 'selected_ingredients.ingredient', model: IngredientModel, select: 'id name type' }
       ]);
     } catch (error: any) {
       throw new ApiError(
@@ -222,7 +222,7 @@ export class ProductRepository {
         })
         .populate([
           { path: 'branch_office', model: BranchOfficeModel, select: 'id name address' },
-          { path: 'selected_ingredients.ingredient', model: IngredientModel, select: 'id name' }
+          { path: 'selected_ingredients.ingredient', model: IngredientModel, select: 'id name type' }
         ]);
     } catch (error: any) {
       throw new ApiError(

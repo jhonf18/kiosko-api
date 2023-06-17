@@ -1,4 +1,5 @@
 import { getModelForClass, modelOptions, prop, Ref } from '@typegoose/typegoose';
+import { BranchOfficeSchema } from '../../backOffice/schemas/branchOffice';
 import { ProductSchema } from '../../backOffice/schemas/product';
 import { OrderSchema } from './order';
 
@@ -21,6 +22,9 @@ export class TicketSchema {
 
   @prop({ ref: () => OrderSchema, required: true })
   order: Ref<OrderSchema>;
+
+  @prop({ ref: () => BranchOfficeSchema, required: true })
+  branch_office: Ref<BranchOfficeSchema>;
 
   @prop({ type: () => Date })
   date_accepted?: Date;

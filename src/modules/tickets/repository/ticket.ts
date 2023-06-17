@@ -1,4 +1,6 @@
 import { UserModel } from '../../../shared/schemas/user';
+import { BranchOfficeRepository } from '../../backOffice/repository/branchOffice';
+import { BranchOfficeModel } from '../../backOffice/schemas/branchOffice';
 import { ApiError } from './../../../config/errors/ApiError';
 import { httpStatus } from './../../../config/errors/httpStatusCodes';
 import { ProductRepository } from './../../backOffice/repository/product';
@@ -25,7 +27,11 @@ interface ITicketUpdate {
 }
 
 export class TicketRepository {
-  constructor(private readonly ticketStore: typeof TicketModel, private readonly productRepo: ProductRepository) {}
+  constructor(
+    private readonly ticketStore: typeof TicketModel,
+    private readonly branchOfficeRepo: BranchOfficeRepository,
+    private readonly productRepo: ProductRepository
+  ) {}
 
   public async saveMany(tickets: Array<ITicketInput>) {
     try {
@@ -85,7 +91,6 @@ export class TicketRepository {
       getData = parametrizationSearchParams.select;
 
       if (parametrizationSearchParams.populateOneLevel.length > 0) {
-        console.log(parametrizationSearchParams.populateOneLevel);
         for (let populate of parametrizationSearchParams.populateOneLevel) {
           if (populate.path === 'product') {
             populate.model = ProductModel;
@@ -114,12 +119,6 @@ export class TicketRepository {
               model: ProductModel,
               select: 'id'
             };
-
-            console.log(populate);
-
-            // populate.path = 'order.selected_products.product';
-            // populate.model = ProductModel;
-            // populate.select += 'id';
           } else if (populate.path === 'waiter') {
             let index = -1;
             const orderPopulate = parametrizationSearchParams.populateOneLevel.find((popu, indexFinded) => {
@@ -141,6 +140,8 @@ export class TicketRepository {
               model: UserModel,
               select: fieldsWaiterToPopulate + ' -_id'
             };
+          } else if (populate.path === 'branch_office') {
+            populate.model = BranchOfficeModel;
           }
 
           populate.select += ' -_id';
@@ -166,6 +167,15 @@ export class TicketRepository {
         );
 
       conditions.product = productStore._id;
+    }
+
+    if (conditions.hasOwnProperty('branch_office')) {
+      const branchOfficeStore = await this.branchOfficeRepo.findOne({ id: conditions.branch_office }, '_id', true);
+
+      if (!branchOfficeStore)
+        throw new ApiError('Not Found', httpStatus.INTERNAL_SERVER_ERROR, 'No se ha encontrado la sucursal.', true);
+
+      conditions.branch_office = branchOfficeStore._id;
     }
 
     if (conditions.hasOwnProperty('sort')) {

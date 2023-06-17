@@ -68,7 +68,7 @@ export class OrderService {
 
       const tickets = await this.ticketService.getTickets(
         { $or: ticketsIDS },
-        'id,sections,comments,product.name,product.price,product.ingredients,product.id'
+        'id,sections,comments,product.name,product.price,product.ingredients,product.id,branch_office.id'
       );
       response.tickets = tickets;
     } else {
@@ -301,7 +301,7 @@ export class OrderService {
 
       const tickets = await this.ticketService.getTickets(
         { $or: ticketsIDS },
-        'id,sections,comments,product.name,product.price,product.ingredients'
+        'id,sections,comments,product.name,product.price,product.ingredients,branch_office.id'
       );
 
       response.tickets = tickets;
