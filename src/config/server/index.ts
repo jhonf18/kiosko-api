@@ -1,17 +1,18 @@
 import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
+import { FRONTEND_URL, REALTIME_URL } from '../../config/env/env';
 import routes from '../../routes';
 import { errorHandlerApp } from '../errors/errorHandlerApp';
 import { httpLogger } from './../logger/httpLogger';
-
 const configApp = express();
 
 // config cors
 //if (process.env.ENV === 'development') {
+
 configApp.use(
   cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'https://kiosko-realtime-production.up.railway.app'],
+    origin: [FRONTEND_URL, REALTIME_URL],
     optionsSuccessStatus: 200
   })
 );

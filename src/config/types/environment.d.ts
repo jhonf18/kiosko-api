@@ -13,6 +13,8 @@ declare global {
       JWT_EXPIRES: string;
       JWT_ALGO: any;
       JWT_SECRET: string;
+      FRONTEND_URL: string;
+      REALTIME_URL: string;
     }
   }
 }
