@@ -42,7 +42,7 @@ export class ProductSchema {
   })
   selected_ingredients?: Array<{
     ingredient: Ref<IngredientSchema, string>;
-    quatity?: number;
+    quantity?: number;
   }>;
 
   @prop({ default: Date.now, type: () => Date })

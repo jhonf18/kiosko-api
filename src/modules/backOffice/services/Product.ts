@@ -200,8 +200,6 @@ export class ProductManagmentService {
         }
       });
 
-      console.log(ingredients);
-
       return { ...e, selected_ingredients: ingredients };
     });
 

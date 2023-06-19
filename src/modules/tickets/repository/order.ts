@@ -98,11 +98,10 @@ export class OrderRepository {
             populate.path = 'selected_products.product';
             populate.model = ProductModel;
 
-            getData +=
-              ' selected_products.ids_selected_ingredients selected_products.comments selected_products.ticket_id';
+            getData += ' selected_products';
 
             if (populate.select.split(' ').includes('ingredients')) {
-              populate.select += ' selected_ingredients selected_ingredients.ingredient selected_ingredients.quantity';
+              populate.select += ' selected_ingredients';
               populate.populate = {
                 path: 'selected_ingredients.ingredient',
                 select: 'id name type -_id',

@@ -82,11 +82,8 @@ export class UserServiceManagment {
       }
     }
 
-    console.log(userInput.password);
-
     // Hashing password
     if (userInput.password && userInput.password.length > 0) {
-      console.log(userInput.password);
       userStore.password = await this.hashingPassword.encryptPassword(userInput.password);
     }
 

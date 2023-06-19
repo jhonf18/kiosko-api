@@ -98,7 +98,7 @@ export class TicketRepository {
             const selectPopulateArray = populate.select.split(' ');
             if (selectPopulateArray.includes('ingredients')) {
               getData += ' ingredients';
-              populate.select += ' selected_ingredients selected_ingredients.quantity selected_ingredients.ingredient';
+              populate.select += ' selected_ingredients';
               populate.populate = {
                 path: 'selected_ingredients.ingredient',
                 select: 'id name type -_id',
@@ -108,8 +108,6 @@ export class TicketRepository {
           } else if (populate.path === 'order') {
             populate.model = OrderModel;
           } else if (populate.path === 'selected_products') {
-            console.log('hereee');
-
             populate.path = 'order';
             populate.model = OrderModel;
             populate.select += ' selected_products id';
