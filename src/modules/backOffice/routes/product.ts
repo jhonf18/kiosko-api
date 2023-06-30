@@ -2,6 +2,7 @@ import express from 'express';
 import {
   createIngredientController,
   createProductController,
+  createProductInAllBranchOfficesController,
   createVariantController,
   deleteIngredientController,
   deleteProductController,
@@ -27,6 +28,7 @@ routesProduct.get('/product/:idProduct', getProductController);
 routesProduct.post('/create-ingredient', createIngredientController);
 routesProduct.post('/create-variant', createVariantController);
 routesProduct.post('/create-product', createProductController);
+routesProduct.post('/create-product-in-all-branch-offices', createProductInAllBranchOfficesController);
 
 // Methods PUT
 routesProduct.put('/update-ingredient/:idIngredient', updateIngredientController);

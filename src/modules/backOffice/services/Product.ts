@@ -84,6 +84,79 @@ export class ProductManagmentService {
     return { product: this.formatProductForSend([productWithoutFieldsImportants])[0] };
   }
 
+  public async createProductInAllBranchOffices(productInput: IProductInput) {
+    // validate fields
+    const fields: Array<string> = ['name', 'price', 'category'];
+
+    const validatorSignup = isNotEmpty(productInput, fields);
+    if (validatorSignup.error) {
+      throw new ApiError('CUSTOM', httpStatus.BAD_REQUEST, 'Error in the inputs', true, validatorSignup.errors);
+    }
+
+    // Verify that price is a number
+    if (typeof productInput.price !== 'number')
+      throw new ApiError('Bad Request', httpStatus.BAD_REQUEST, 'El precio del producto debe ser un número.', true);
+
+    // Verify that the name category is Valid
+    const categoryStore = await this.productCategoryRepo.findOne({ id: productInput.category }, 'name subcategories');
+    if (!categoryStore)
+      throw new ApiError(
+        'Not Found Category',
+        httpStatus.NOT_FOUND,
+        'No se ha encontrado la categoria seleccionada.',
+        true
+      );
+
+    // Verify that subcategories is valid
+    if (!categoryStore.subcategories.includes(productInput.subcategory))
+      throw new ApiError(
+        'Not Found Subcategory',
+        httpStatus.NOT_FOUND,
+        'La subcategoria seleccionada no es válida.',
+        true
+      );
+
+    // Validate that media files are an array of strings
+    if (productInput.mediaFiles && !checkIsStringsArray(productInput.mediaFiles))
+      throw new ApiError(
+        'Bad Request',
+        httpStatus.BAD_REQUEST,
+        'Los recursos multimedia del producto no son cadenas de texto.',
+        true
+      );
+
+    const branchOffices = await this.branchOfficeRepo.find('id');
+    const products = [];
+
+    console.log(branchOffices);
+
+    for (const branchOffice of branchOffices) {
+      const productToSave = {
+        id: uuidv4(),
+        name: productInput.name,
+        media_files: productInput.mediaFiles || [],
+        price: productInput.price,
+        active: productInput.active,
+        category: categoryStore.name,
+        subcategory: productInput.subcategory,
+        branch_office: branchOffice.id,
+        selected_ingredients: productInput.selectedIngredients || [],
+        passage_sections: productInput.passageSections || [categoryStore.name]
+      };
+
+      const productRecord = await this.productRepo.save(productToSave);
+
+      const productWithoutFieldsImportants = deleteFields(productRecord);
+      products.push(productWithoutFieldsImportants);
+    }
+
+    console.log(products);
+
+    return {
+      products: this.formatProductForSend(products)
+    };
+  }
+
   // TODO: Create filter for search in gets products
 
   public async getProduct(id: string, getData?: string) {

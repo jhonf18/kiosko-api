@@ -113,6 +113,27 @@ export const createProductController = async (req: Request, res: Response, next:
   }
 };
 
+export const createProductInAllBranchOfficesController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    console.log(req.body);
+    const { products } = await productManagmentService.createProductInAllBranchOffices({
+      name: req.body.name,
+      mediaFiles: req.body.media_files,
+      selectedIngredients: req.body.selected_ingredients,
+      price: req.body.price,
+      active: req.body.active,
+      category: req.body.category,
+      passageSections: req.body.passage_sections,
+      subcategory: req.body.subcategory,
+      branchOffice: req.body.branch_office
+    });
+
+    response(products, 'OK', httpStatus.CREATED, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Controllers of type PUT
 
 export const updateIngredientController = async (req: Request, res: Response, next: NextFunction) => {
