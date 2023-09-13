@@ -191,9 +191,13 @@ export class OrderService {
             selectedProductResponse.ingredients = [];
 
             for (const ingredientId of selectedProduct.ids_selected_ingredients) {
-              const ingredient = selectedProduct.product.selected_ingredients.find(
-                (ingredient: any) => ingredient.ingredient.id === ingredientId
-              );
+              const ingredient = selectedProduct.product.selected_ingredients.find((ingredient: any) => {
+                if (ingredient && ingredient.ingredient) {
+                  return ingredient.ingredient.id === ingredientId;
+                }
+                return false;
+              });
+
               if (ingredient) {
                 let ingredientResponse: any = {};
                 Object.assign(ingredientResponse, ingredient.ingredient);

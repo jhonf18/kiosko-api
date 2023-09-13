@@ -57,9 +57,18 @@ export class TicketService {
         // We should select the ingredients of ticket.product.selected_ingredients array such that coincide with those of the ticket.ingredients
         for (const ingredientID of ticket.ingredients) {
           let ingredientResponse: any = {};
-          console.log('PRODUCT: ---------', JSON.stringify(ticket.product));
-          console.log('ingredients: -------', JSON.stringify(ticket.product.selected_ingredients));
-          const ingredient = ticket.product.selected_ingredients.find((el: any) => el.ingredient.id === ingredientID);
+
+          console.log(ticket.product.selected_ingredients);
+          const ingredient = ticket.product.selected_ingredients.find((el: any) => {
+            if (el && el.ingredient) {
+              return el.ingredient.id === ingredientID;
+            }
+
+            return false;
+          });
+
+          if (!ingredient) continue;
+
           Object.assign(ingredientResponse, ingredient.ingredient);
           if (ingredient.quantity) {
             ingredientResponse.quantity = ingredient.quantity;

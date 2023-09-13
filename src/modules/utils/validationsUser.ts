@@ -4,7 +4,7 @@ export class ValidatorUser {
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   constructor(private userService: UserService) {}
 
-  public async Signup(user: any, fields: string[]): Promise<{ error: boolean; errors: any }> {
+  public async Signup(user: any, fields: string[], validateName = true): Promise<{ error: boolean; errors: any }> {
     // eslint-disable-next-line prefer-const
     let errors: { error: boolean; errors: any } = { error: false, errors: [] };
 
@@ -19,7 +19,7 @@ export class ValidatorUser {
     if (errors.error) return errors;
 
     //validar que los nombres sean válidos
-    if (user['name']) {
+    if (user['name'] && validateName) {
       const expRegexName = /^[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF\s]*$/;
       if (!expRegexName.test(user['name'])) {
         errors.error = true;

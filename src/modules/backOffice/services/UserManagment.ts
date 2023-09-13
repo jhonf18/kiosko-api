@@ -22,7 +22,7 @@ export class UserServiceManagment {
     // Validate fields
     const fields: Array<string> = ['name', 'role', 'active'];
 
-    const validatorSignup = await this.validatorUser.Signup(userInput, fields);
+    const validatorSignup = await this.validatorUser.Signup(userInput, fields, false);
     if (validatorSignup.error) {
       throw new ApiError('CUSTOM', httpStatus.BAD_REQUEST, 'Error in the inputs', true, validatorSignup.errors);
     }

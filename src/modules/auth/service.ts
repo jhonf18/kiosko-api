@@ -34,7 +34,7 @@ export class AuthService {
     // Validate fields
     const fields: Array<string> = ['name', 'email', 'password_1', 'password_2', 'role', 'branchOffice'];
 
-    const validatorSignup = await this.validatorUser.Signup(userInput, fields);
+    const validatorSignup = await this.validatorUser.Signup(userInput, fields, false);
     if (validatorSignup.error) {
       throw new ApiError('CUSTOM', httpStatus.BAD_REQUEST, 'Error in the inputs', true, validatorSignup.errors);
     }
