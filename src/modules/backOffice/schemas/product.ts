@@ -50,6 +50,9 @@ export class ProductSchema {
 
   @prop({ default: Date.now, type: () => Date })
   updated_at: Date;
+
+  @prop({ default: false, type: () => Boolean, required: false })
+  chan_change_price?: boolean;
 }
 
 export const ProductModel = getModelForClass(ProductSchema);

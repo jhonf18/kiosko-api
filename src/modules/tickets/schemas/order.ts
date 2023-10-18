@@ -16,6 +16,7 @@ export class OrderSchema {
         ticket_id?: TicketSchema;
         ids_selected_ingredients?: Array<String>;
         comments: string;
+        price?: number;
       }>,
     type: () => Array<String>,
     required: false,
@@ -26,6 +27,7 @@ export class OrderSchema {
     ticket_id?: Ref<TicketSchema, string>;
     ids_selected_ingredients?: Array<string>;
     comments: string;
+    price?: number;
   }>;
 
   @prop({ type: () => String, required: true })

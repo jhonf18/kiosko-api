@@ -15,6 +15,7 @@ export interface ISelectedProduct {
   ids_selected_ingredients?: Array<string>;
   comments?: string;
   passage_sections?: Array<string>;
+  price?: number;
 }
 
 export interface IUpdateOrder {

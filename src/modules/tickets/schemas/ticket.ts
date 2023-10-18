@@ -11,6 +11,9 @@ export class TicketSchema {
   @prop({ ref: () => ProductSchema, required: true })
   product: Ref<ProductSchema, string>;
 
+  @prop({ type: () => Number, required: true })
+  price: number;
+
   @prop({ type: () => Array<String>, required: true })
   ingredients: Array<string>;
 

@@ -58,7 +58,6 @@ export class TicketService {
         for (const ingredientID of ticket.ingredients) {
           let ingredientResponse: any = {};
 
-          console.log(ticket.product.selected_ingredients);
           const ingredient = ticket.product.selected_ingredients.find((el: any) => {
             if (el && el.ingredient) {
               return el.ingredient.id === ingredientID;

@@ -12,6 +12,7 @@ export interface ISelectedProductInput {
   product: string;
   ids_selected_ingredients?: Array<string>;
   comments?: string;
+  price?: number;
 }
 
 export interface ICustomProductInput {

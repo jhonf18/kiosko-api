@@ -289,13 +289,16 @@ export class OrderRepository {
       result.comments = `${uuidv4()}::${!selected.comments ? '' : selected.comments}`;
       result.passage_sections = productStore.passage_sections;
 
-      if (getPriceProduct && productStore.price) totalPrice += productStore.price;
+      if (getPriceProduct && productStore.price) {
+        totalPrice += selected.price || productStore.price;
+      }
 
       if (orderIDKey && branchOfficeID && result.passage_sections[0] !== 'BEBIDAS') {
         result.ticket_id = uuidv4();
         tickets.push({
           id: result.ticket_id,
           product: result.product,
+          price: selected.price || productStore.price || 0,
           ingredients: result.ids_selected_ingredients,
           sections: result.passage_sections,
           comments: result.comments || '',
