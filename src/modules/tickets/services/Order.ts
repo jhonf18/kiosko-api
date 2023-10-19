@@ -171,7 +171,7 @@ export class OrderService {
       let order = orders[i];
       order.tickets = await this.ticketService.getTickets(
         { order: order._id },
-        'id,sections,product,comments,product.name,product.id,product.ingredients,date_accepted,date_finished'
+        'id,price,sections,product,comments,product.name,product.id,product.ingredients,date_accepted,date_finished'
       );
       if (order.selected_products) {
         const selectedProducts = order.selected_products as any[];
