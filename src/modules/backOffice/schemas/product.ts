@@ -52,7 +52,7 @@ export class ProductSchema {
   updated_at: Date;
 
   @prop({ default: false, type: () => Boolean, required: false })
-  chan_change_price?: boolean;
+  can_change_price?: boolean;
 }
 
 export const ProductModel = getModelForClass(ProductSchema);

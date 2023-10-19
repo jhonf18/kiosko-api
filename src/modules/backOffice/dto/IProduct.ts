@@ -8,6 +8,7 @@ export interface IProductInput {
   subcategory: string;
   branchOffice: string;
   selectedIngredients?: Array<ISelectedIngredients>;
+  canChangePrice?: boolean;
 }
 
 interface ISelectedIngredients {
@@ -25,4 +26,5 @@ export interface IUpdateProductInput {
   branchOffice: string;
   passageSections?: Array<string>;
   selectedIngredients?: Array<ISelectedIngredients>;
+  canChangePrice?: boolean;
 }

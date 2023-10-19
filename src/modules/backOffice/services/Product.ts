@@ -76,7 +76,8 @@ export class ProductManagmentService {
       subcategory: productInput.subcategory,
       branch_office: productInput.branchOffice,
       selected_ingredients: productInput.selectedIngredients || [],
-      passage_sections: productInput.passageSections || [categoryStore.name]
+      passage_sections: productInput.passageSections || [categoryStore.name],
+      can_change_price: productInput.canChangePrice || false
     });
 
     const productWithoutFieldsImportants = deleteFields(productRecord);
@@ -128,8 +129,6 @@ export class ProductManagmentService {
     const branchOffices = await this.branchOfficeRepo.find('id');
     const products = [];
 
-    console.log(branchOffices);
-
     for (const branchOffice of branchOffices) {
       const productToSave = {
         id: uuidv4(),
@@ -141,7 +140,8 @@ export class ProductManagmentService {
         subcategory: productInput.subcategory,
         branch_office: branchOffice.id,
         selected_ingredients: productInput.selectedIngredients || [],
-        passage_sections: productInput.passageSections || [categoryStore.name]
+        passage_sections: productInput.passageSections || [categoryStore.name],
+        can_change_price: productInput.canChangePrice || false
       };
 
       const productRecord = await this.productRepo.save(productToSave);
@@ -149,8 +149,6 @@ export class ProductManagmentService {
       const productWithoutFieldsImportants = deleteFields(productRecord);
       products.push(productWithoutFieldsImportants);
     }
-
-    console.log(products);
 
     return {
       products: this.formatProductForSend(products)
@@ -255,7 +253,8 @@ export class ProductManagmentService {
         subcategory: updateProduct.subcategory,
         branch_office: updateProduct.branchOffice,
         selected_ingredients: updateProduct.selectedIngredients || [],
-        passage_sections: updateProduct.passageSections || [categoryStore.name]
+        passage_sections: updateProduct.passageSections || [categoryStore.name],
+        can_change_price: updateProduct.canChangePrice || false
       }
     );
 

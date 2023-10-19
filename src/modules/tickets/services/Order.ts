@@ -220,6 +220,7 @@ export class OrderService {
             selectedProductResponse.ingredients.push(...ingredientsResponse);
           }
           selectedProductResponse.ticket_id = selectedProduct.ticket_id;
+          selectedProductResponse.price = selectedProduct.price || selectedProduct.product.price || null;
 
           selectedProductResponse.all_ingredients = selectedProduct.product.selected_ingredients.map(
             (ingredientObj: any) => {
@@ -293,7 +294,7 @@ export class OrderService {
 
     const resp = await this.orderRepo.find(
       { id: orderID },
-      'id name created_at waiter.id is_open total_price waiter.name waiter.nickname selected_products.id selected_products.name selected_products.price selected_products.media_files selected_products.selected_ingredients',
+      'id name created_at waiter.id is_open total_price waiter.name waiter.nickname selected_products.id selected_products.name selected_products.price selected_products.media_files selected_products.selected_ingredients selected_products.price',
       true
     );
 
@@ -305,7 +306,7 @@ export class OrderService {
 
       const tickets = await this.ticketService.getTickets(
         { $or: ticketsIDS },
-        'id,sections,comments,product.name,product.price,product.ingredients,branch_office.id'
+        'id,sections,comments,product.name,product.price,product.ingredients,branch_office.id,price'
       );
 
       response.tickets = tickets;
@@ -356,6 +357,7 @@ export class OrderService {
           selectedProductResponse.ingredients.push(...ingredientsResponse);
         }
         selectedProductResponse.ticket_id = selectedProduct.ticket_id;
+        selectedProductResponse.price = selectedProduct.price || selectedProduct.product.price || null;
 
         selectedProductResponse.all_ingredients = selectedProduct.product.selected_ingredients.map(
           (ingredientObj: any) => {

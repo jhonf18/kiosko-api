@@ -104,7 +104,8 @@ export const createProductController = async (req: Request, res: Response, next:
       category: req.body.category,
       passageSections: req.body.passage_sections,
       subcategory: req.body.subcategory,
-      branchOffice: req.body.branch_office
+      branchOffice: req.body.branch_office,
+      canChangePrice: req.body.can_change_price
     });
 
     response(product, 'OK', httpStatus.CREATED, res);
@@ -125,7 +126,8 @@ export const createProductInAllBranchOfficesController = async (req: Request, re
       category: req.body.category,
       passageSections: req.body.passage_sections,
       subcategory: req.body.subcategory,
-      branchOffice: req.body.branch_office
+      branchOffice: req.body.branch_office,
+      canChangePrice: req.body.can_change_price
     });
 
     response(products, 'OK', httpStatus.CREATED, res);
@@ -173,7 +175,8 @@ export const updateProductController = async (req: Request, res: Response, next:
       subcategory: req.body.subcategory,
       branchOffice: req.body.branch_office,
       passageSections: req.body.passage_sections,
-      selectedIngredients: req.body.selected_ingredients
+      selectedIngredients: req.body.selected_ingredients,
+      canChangePrice: req.body.can_change_price
     });
 
     response(product, 'OK', httpStatus.OK, res);

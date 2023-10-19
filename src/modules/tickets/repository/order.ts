@@ -46,10 +46,12 @@ export class OrderRepository {
       const selectedProductsToSave = (await this.preparateProductsToSave(
         order.selected_products,
         orderStore._id,
-        branchOfficeStore?._id
-      )) as { products: ISelectedProduct[]; tickets: any[] };
+        branchOfficeStore?._id,
+        true
+      )) as { products: ISelectedProduct[]; tickets: any[]; totalPrice: number };
       order.selected_products = selectedProductsToSave.products;
       tickets = selectedProductsToSave.tickets;
+      orderStore.total_price = selectedProductsToSave.totalPrice;
     }
 
     const ticketsRecord = await this.ticketRepo.saveMany(tickets);

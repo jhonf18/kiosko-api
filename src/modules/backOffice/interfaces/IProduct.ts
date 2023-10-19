@@ -9,6 +9,7 @@ export interface IProduct {
   branch_office: string;
   selected_ingredients: Array<ISelectedIngredients>;
   passage_sections: Array<string>;
+  can_change_price: boolean;
 }
 
 interface ISelectedIngredients {
@@ -26,4 +27,5 @@ export interface IUpdateProduct {
   branch_office: string;
   passage_sections: Array<string>;
   selected_ingredients: Array<ISelectedIngredients>;
+  can_change_price: boolean;
 }
